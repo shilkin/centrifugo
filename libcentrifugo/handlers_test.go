@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/auth"
+	"github.com/shilkin/centrifugo/libcentrifugo/auth"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )

@@ -3,7 +3,7 @@ package libcentrifugo
 import (
 	"encoding/json"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/gorilla/websocket"
 	"github.com/nu7hatch/gouuid"
 )

@@ -10,10 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo"
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/shilkin/go-tarantool"
 )
 
 const (
@@ -214,6 +215,25 @@ func Main() {
 					viper.GetBool("redis_api"),
 					viper.GetInt("redis_pool"),
 				)
+			case "tarantool":
+				hostname, err := os.Hostname()
+				if err != nil {
+					logger.FATAL.Fatalln("Unable to determine local hostname: " + err.Error())
+				}
+				config := libcentrifugo.TarantoolEngineConfig{
+					PoolConfig: libcentrifugo.TarantoolPoolConfig{
+						Address: string("localhost:33013"),
+						PoolSize: 1,
+						Opts: tarantool.Opts{
+							500 * time.Millisecond,	// Timeout   time.Duration // milliseconds
+							500 * time.Millisecond,	// Reconnect time.Duration // milliseconds
+							"test",					// User      string
+							"123",					// Pass      string
+						},
+					},
+					Endpoint: fmt.Sprintf("http://%s:8000/api/notifications", hostname), // , viper.GetInt("port")),
+				}
+				e = libcentrifugo.NewTarantoolEngine(app, config)
 			default:
 				logger.FATAL.Fatalln("unknown engine: " + viper.GetString("engine"))
 			}

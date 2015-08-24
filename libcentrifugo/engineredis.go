@@ -6,8 +6,7 @@ import (
 	"net"
 	"net/url"
 	"time"
-
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/garyburd/redigo/redis"
 )
 

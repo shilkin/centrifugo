@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/auth"
+	"github.com/shilkin/centrifugo/libcentrifugo/auth"
 	"github.com/stretchr/testify/assert"
 )
 

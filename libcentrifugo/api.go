@@ -3,7 +3,7 @@ package libcentrifugo
 import (
 	"encoding/json"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 )
 
 // apiCmd builds API command and dispatches it into correct handler method

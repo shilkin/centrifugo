@@ -2,7 +2,7 @@ FROM centos:7
 
 ENV VERSION 0.2.3
 
-ENV DOWNLOAD https://github.com/centrifugal/centrifugo/releases/download/v$VERSION/centrifugo-$VERSION-linux-amd64.zip
+ENV DOWNLOAD https://github.com/shilkin/centrifugo/releases/download/v$VERSION/centrifugo-$VERSION-linux-amd64.zip
 
 RUN curl -sSL "$DOWNLOAD" -o /tmp/centrifugo.zip && \
     yum install -y unzip && \

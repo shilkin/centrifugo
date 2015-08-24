@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/gorilla/securecookie"
 	"github.com/nu7hatch/gouuid"
 )

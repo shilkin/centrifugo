@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/auth"
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
-	"github.com/centrifugal/centrifugo/libcentrifugo/stringqueue"
+	"github.com/shilkin/centrifugo/libcentrifugo/auth"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo/stringqueue"
 	"github.com/nu7hatch/gouuid"
 )
 

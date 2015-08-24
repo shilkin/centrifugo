@@ -1,19 +1,19 @@
 Centrifuge + Go = Centrifugo – harder, better, faster, stronger.
 
 Centrifugo is a real-time messaging server. This is a successor of 
-[Centrifuge](https://github.com/centrifugal/centrifuge). Please note that it can be used in conjuction with your application backend written in any language - Python, Ruby, Perl, PHP, Javascript, Java, Objective-C etc.
+[Centrifuge](https://github.com/shilkin/centrifuge). Please note that it can be used in conjuction with your application backend written in any language - Python, Ruby, Perl, PHP, Javascript, Java, Objective-C etc.
 
 To understand what is it for and how it works – please, read 
 [documentation](http://fzambia.gitbooks.io/centrifugal/content/) of 
 Centrifugal organization.
 
 Releases available as single executable files – just 
-[download](https://github.com/centrifugal/centrifugo/releases) archive for your platform,  
+[download](https://github.com/shilkin/centrifugo/releases) archive for your platform,  
 unpack it and you are done. See also [Docker image](https://registry.hub.docker.com/u/fzambia/centrifugo/).
 
 Try [demo instance](https://centrifugo.herokuapp.com/) on Heroku (password `demo`). Or deploy your own Centrifugo instance in one click:
 
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/centrifugal/centrifugo)
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/shilkin/centrifugo)
 
 Highlights:
 * Fast server capable to serve lots of simultanious connections

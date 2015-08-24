@@ -11,8 +11,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo"
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/nu7hatch/gouuid"
 	"github.com/spf13/viper"
 )

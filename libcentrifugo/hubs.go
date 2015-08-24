@@ -3,7 +3,7 @@ package libcentrifugo
 import (
 	"sync"
 
-	"github.com/centrifugal/centrifugo/libcentrifugo/logger"
+	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 )
 
 // clientHub manages client connections.

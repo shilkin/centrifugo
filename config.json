@@ -1,7 +1,20 @@
 {
+  "log_level": "debug",
   "web_password": "password",
-  "web_secret": "secret",
+  "web_secret": "0",
   "projects": [
+    {
+      "name": "notifications",
+      "secret": "0",
+      "anonymous": false,
+      "publish": true,
+      "watch": true,
+      "presence": true,
+      "join_leave": true,
+      "history_size": 0,
+      "history_lifetime": 0,
+      "namespaces": []
+    },
     {
       "name": "development",
       "secret": "secret",

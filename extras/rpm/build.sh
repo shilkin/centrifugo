@@ -11,7 +11,7 @@ if [ ! -f centrifugo-$1-linux-amd64.zip ]; then
 fi
 
 rm -rf ./centrifuge-web
-git clone https://github.com/centrifugal/centrifuge-web.git ./centrifuge-web
+git clone https://github.com/shilkin/centrifuge-web.git ./centrifuge-web
 rm -rf ./centrifuge-web/app/src/
 
 cp centrifugo-$1-linux-amd64.zip ~/rpmbuild/SOURCES/centrifugo-$1-linux-amd64.zip
