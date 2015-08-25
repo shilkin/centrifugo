@@ -90,7 +90,8 @@ type BodyType struct {
 
 type ServiceMessage struct {
 	Action string
-	Data json.RawMessage
+	Data []string
+	// Data json.RawMessage
 }
 
 type IDs []string
@@ -162,8 +163,10 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 		if err == nil {
 			var srv ServiceMessage
 			err = json.Unmarshal(msg.Body.Data, &srv)
-			if err == nil {
-				logger.DEBUG.Printf("publish: %v\n", srv)
+			// logger.DEBUG.Println("len(srv) = ", len(srv))
+			// empty := ServiceMessage{}
+			if srv.Action != "" && err == nil {
+				logger.DEBUG.Printf("publish: %t\n", srv)
 				var functionName string
 
 				switch(srv.Action) {
@@ -172,42 +175,42 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 				case "push":
 					functionName = "notification_push"
 				default:
-					goto OTHER	
+					return e.app.handleMsg(chID, message)	
 				}
 
-				logger.DEBUG.Printf("publish: %v\n", string(message))
+				// logger.DEBUG.Printf("publish: %v\n", string(message))
 				uid, ringno, err := parseChannelID(chID)
 				if err != nil {
 					logger.DEBUG.Println("Wow!")
 					return err
 				}
 				
-				var ids IDs
+				/*var ids IDs
 				err = json.Unmarshal(srv.Data, &ids)
 				if err != nil {
 					return err
 				}
 				logger.DEBUG.Printf("%s: %v\n", functionName, ids)
-				
+				*/
+
 				// TODO: further processing
 				conn, err := e.pool.get()
 				if err != nil {
 					return err
 				}
 
-				for _, id := range(ids) {
+				for _, id := range(srv.Data) {
 					_, err = conn.Call(functionName, []interface{}{uid, ringno, id})
 					if err != nil {
 						logger.ERROR.Printf("%s\n", err.Error())
 					}
 				}
-
 				return nil
-				// }
 			}
-		}	
+		}
+		// goto OTHER	
 	}
-	OTHER:
+	// OTHER:
 	// All other messages
 	return e.app.handleMsg(chID, message)
 }
@@ -275,8 +278,28 @@ func (e *TarantoolEngine) addHistory(chID ChannelID, message Message, size, life
 }
 
 // getHistory returns history messages for channel
+// return empty slice
+// all history pushed via publish
 func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
-	// not implemented	
+	logger.DEBUG.Printf("history: %v\n", chID)
+
+	uid, ringno, err := parseChannelID(chID)
+	if err != nil {
+		logger.ERROR.Printf("history parse chID error: %v\n", err.Error())
+		return
+	}
+
+	conn, err := e.pool.get()
+	if err != nil {
+		logger.ERROR.Printf("history get conn error: %v\n", err.Error())
+		return
+	}
+
+	_, err = conn.Call("notification_read", []interface{}{uid, ringno, e.endpoint});
+	if err != nil {
+		logger.ERROR.Printf("history call stored proc error: %v\n", err.Error())
+	}
+	
 	return
 }
 
