@@ -84,14 +84,13 @@ type BodyType struct {
 	Info json.RawMessage
 
 	Channel string
-	Data json.RawMessage // !!!
+	Data json.RawMessage
 	Client string
 }
 
 type ServiceMessage struct {
 	Action string
 	Data []string
-	// Data json.RawMessage
 }
 
 type IDs []string
@@ -111,17 +110,18 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 	return e
 }
 
-func newTarantoolPool(config TarantoolPoolConfig) (*TarantoolPool, error) {
-	var err error
-	p := new(TarantoolPool)
+func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) {
+	// var err error
+	p = new(TarantoolPool)
 	p.config = config
 	p.conn, err = tarantool.Connect(config.Address, config.Opts)
 
 	if err != nil {
 		logger.ERROR.Printf("tarantool.Connect: %v", err.Error())
+		return
 	}	
 
-	return p, nil
+	return
 
 	/*
 	if config.PoolSize == 0 {
@@ -163,10 +163,7 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 		if err == nil {
 			var srv ServiceMessage
 			err = json.Unmarshal(msg.Body.Data, &srv)
-			// logger.DEBUG.Println("len(srv) = ", len(srv))
-			// empty := ServiceMessage{}
 			if srv.Action != "" && err == nil {
-				logger.DEBUG.Printf("publish: %t\n", srv)
 				var functionName string
 
 				switch(srv.Action) {
@@ -177,23 +174,11 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 				default:
 					return e.app.handleMsg(chID, message)	
 				}
-
-				// logger.DEBUG.Printf("publish: %v\n", string(message))
 				uid, ringno, err := parseChannelID(chID)
 				if err != nil {
 					logger.DEBUG.Println("Wow!")
 					return err
 				}
-				
-				/*var ids IDs
-				err = json.Unmarshal(srv.Data, &ids)
-				if err != nil {
-					return err
-				}
-				logger.DEBUG.Printf("%s: %v\n", functionName, ids)
-				*/
-
-				// TODO: further processing
 				conn, err := e.pool.get()
 				if err != nil {
 					return err
@@ -208,9 +193,7 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 				return nil
 			}
 		}
-		// goto OTHER	
 	}
-	// OTHER:
 	// All other messages
 	return e.app.handleMsg(chID, message)
 }
@@ -230,6 +213,8 @@ func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
 	}
 
 	_, err = conn.Call("notification_subscribe",  []interface{}{uid, ringno, e.endpoint});
+
+	logger.DEBUG.Println("conn.Call returned [subscribe]")
 	
 	return
 }
@@ -249,7 +234,7 @@ func (e *TarantoolEngine) unsubscribe(chID ChannelID) (err error) {
 	}
 
 	_, err = conn.Call("notification_unsubscribe", []interface{}{uid, ringno, e.endpoint});
-	
+
 	return	
 }
 
@@ -280,6 +265,17 @@ func (e *TarantoolEngine) addHistory(chID ChannelID, message Message, size, life
 // getHistory returns history messages for channel
 // return empty slice
 // all history pushed via publish
+
+type tarantoolHistoryItem struct {
+	counter string
+	status string
+	id string
+}
+
+func (h *tarantoolHistoryItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(h)
+}
+
 func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 	logger.DEBUG.Printf("history: %v\n", chID)
 
@@ -295,10 +291,36 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 		return
 	}
 
-	_, err = conn.Call("notification_read", []interface{}{uid, ringno, e.endpoint});
+	result, err := conn.Call("notification_read", []interface{}{uid, ringno, e.endpoint});
 	if err != nil {
 		logger.ERROR.Printf("history call stored proc error: %v\n", err.Error())
 	}
+
+	logger.DEBUG.Printf("conn.Call returned [history]: %v\n", result.Data)
+
+	if len(result.Data) == 0 {
+		return 	// check result is empty
+	}
+	
+	logger.DEBUG.Printf("%t", result.Data)
+
+	data := result.Data[0]
+	
+	// logger.DEBUG.Printf("%t", data)
+
+
+	/*
+	if len(ring) == 0 {	
+		return	// check ring is empty
+	}*/
+
+	/*
+	for _, id := range ring[1:] {
+		encoded, _ := json.Marshal( tarantoolHistoryItem {counter: string(ring[0]), status: string(id[0]), id: string(id[1:])} )
+		rawMessage := json.RawMessage(encoded)
+		msg := Message{ Data: &rawMessage }
+		msgs = append(msgs, msg)
+	}*/
 	
 	return
 }

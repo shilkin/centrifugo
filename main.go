@@ -222,7 +222,7 @@ func Main() {
 				}
 				config := libcentrifugo.TarantoolEngineConfig{
 					PoolConfig: libcentrifugo.TarantoolPoolConfig{
-						Address: string("localhost:33013"),
+						Address: string("wks-shilkin:33013"),
 						PoolSize: 1,
 						Opts: tarantool.Opts{
 							500 * time.Millisecond,	// Timeout   time.Duration // milliseconds
