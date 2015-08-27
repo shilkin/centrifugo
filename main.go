@@ -95,6 +95,15 @@ func Main() {
 	var redisAPI bool
 	var redisPool int
 
+	// Tarantool
+	var ttHost string
+	var ttPort string
+	var ttUser string
+	var ttPassword string
+	var ttPool int
+	var ttTimeoutResponse int
+	var ttTimeoutReconnect int
+
 	var rootCmd = &cobra.Command{
 		Use:   "",
 		Short: "Centrifugo",
@@ -131,6 +140,17 @@ func Main() {
 			viper.SetDefault("project_history_lifetime", 0)
 			viper.SetDefault("project_namespaces", "")
 
+			// Tarantool defaults
+			/*
+			viper.SetDefault("tt_pool", 2)
+			viper.SetDefault("tt_host", "127.0.0.1")
+			viper.SetDefault("tt_port", "3301")
+			viper.SetDefault("tt_user", "")
+			viper.SetDefault("tt_password", "")
+			viper.SetDefault("tt_timeout_response", 500)
+			viper.SetDefault("tt_timeout_reconnect", 500)
+			*/
+			
 			viper.SetEnvPrefix("centrifugo")
 			viper.BindEnv("engine")
 			viper.BindEnv("insecure")
@@ -166,6 +186,16 @@ func Main() {
 			viper.BindPFlag("redis_url", cmd.Flags().Lookup("redis_url"))
 			viper.BindPFlag("redis_api", cmd.Flags().Lookup("redis_api"))
 			viper.BindPFlag("redis_pool", cmd.Flags().Lookup("redis_pool"))
+
+			// Tarantool
+			viper.BindPFlag("tt_pool", cmd.Flags().Lookup("tt_pool"))
+			viper.BindPFlag("tt_host", cmd.Flags().Lookup("tt_host"))
+			viper.BindPFlag("tt_port", cmd.Flags().Lookup("tt_port"))
+			viper.BindPFlag("tt_user", cmd.Flags().Lookup("tt_user"))
+			viper.BindPFlag("tt_password", cmd.Flags().Lookup("tt_password"))
+			viper.BindPFlag("tt_timeout_response", cmd.Flags().Lookup("tt_timeout_request"))
+			viper.BindPFlag("tt_timeout_reconnect", cmd.Flags().Lookup("tt_timeout_reconnect"))
+
 
 			err := validateConfig(configFile)
 			if err != nil {
@@ -222,13 +252,13 @@ func Main() {
 				}
 				config := libcentrifugo.TarantoolEngineConfig{
 					PoolConfig: libcentrifugo.TarantoolPoolConfig{
-						Address: string("wks-shilkin:33013"),
-						PoolSize: 10,
+						Address: viper.GetString("tt_host") + ":" + viper.GetString("tt_port"),
+						PoolSize: viper.GetInt("tt_pool"),
 						Opts: tarantool.Opts{
-							500 * time.Millisecond,	// Timeout   time.Duration // milliseconds
-							500 * time.Millisecond,	// Reconnect time.Duration // milliseconds
-							"test",					// User      string
-							"123",					// Pass      string
+							time.Duration(viper.GetInt("tt_timeout_response")) * time.Millisecond,
+							time.Duration(viper.GetInt("tt_timeout_reconnect")) * time.Millisecond,
+							viper.GetString("tt_user"),
+							viper.GetString("tt_password"),
 						},
 					},
 					Endpoint: fmt.Sprintf("http://%s:8000/api/notifications", hostname), // , viper.GetInt("port")),
@@ -278,7 +308,7 @@ func Main() {
 	rootCmd.Flags().StringVarP(&configFile, "config", "c", "config.json", "path to config file")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "unique node name")
 	rootCmd.Flags().StringVarP(&web, "web", "w", "", "optional path to web interface application")
-	rootCmd.Flags().StringVarP(&engn, "engine", "e", "memory", "engine to use: memory or redis")
+	rootCmd.Flags().StringVarP(&engn, "engine", "e", "memory", "engine to use: memory, redis, tarantool")
 	rootCmd.Flags().BoolVarP(&insecure, "insecure", "", false, "start in insecure mode")
 	rootCmd.Flags().BoolVarP(&useSSL, "ssl", "", false, "accept SSL connections. This requires an X509 certificate and a key file")
 	rootCmd.Flags().StringVarP(&sslCert, "ssl_cert", "", "", "path to an X509 certificate file")
@@ -292,6 +322,15 @@ func Main() {
 	rootCmd.Flags().StringVarP(&redisURL, "redis_url", "", "", "redis connection URL (Redis engine)")
 	rootCmd.Flags().BoolVarP(&redisAPI, "redis_api", "", false, "enable Redis API listener (Redis engine)")
 	rootCmd.Flags().IntVarP(&redisPool, "redis_pool", "", 256, "Redis pool size (Redis engine)")
+
+	// Tarantool
+	rootCmd.Flags().StringVarP(&ttHost, "tt_host", "", "127.0.0.1", "tarantool host (Tarantool engine)")
+	rootCmd.Flags().StringVarP(&ttPort, "tt_port", "", "3301", "tarantool port (Tarantool engine)")
+	rootCmd.Flags().StringVarP(&ttUser, "tt_user", "", "", "tarantool user (Tarantool engine)")
+	rootCmd.Flags().StringVarP(&ttPassword, "tt_password", "", "", "tarantool password (Tarantool engine)")
+	rootCmd.Flags().IntVarP(&ttPool, "tt_pool", "", 2, "tarantool connection pool size (Tarantool engine)")
+	rootCmd.Flags().IntVarP(&ttTimeoutResponse, "tt_timeout_response", "", 500, "timeout to wait response in milliseconds (Tarantool engine)")
+	rootCmd.Flags().IntVarP(&ttTimeoutReconnect, "tt_timeout_reconnect", "", 500, "timeout to wait until reconnection attempt in milliseconds (Tarantool engine)")
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
