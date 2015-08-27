@@ -133,7 +133,6 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 	// Process service messages
 	if chID != e.app.config.ControlChannel && chID != e.app.config.AdminChannel {
-		logger.DEBUG.Printf("piblish: %v\n", chID)
 		if further, err := e.processMessage(chID, message); !further {
 			return err // if no need further processing
 		}
@@ -144,8 +143,6 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 // subscribe on channel
 func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
-	logger.DEBUG.Printf("subscribe: %v\n", chID)
-
 	uid, ringno, err := parseChannelID(chID)
 	if err != nil {
 		return
@@ -153,20 +150,17 @@ func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
 
 	conn, err := e.pool.get()
 	if err != nil {
+		logger.ERROR.Printf("subscribe tarantool pool error: %v\n", err.Error())
 		return
 	}
 
 	_, err = conn.Call("notification_subscribe",  []interface{}{uid, ringno, e.endpoint});
 
-	logger.DEBUG.Println("conn.Call returned [subscribe]")
-	
 	return
 }
 
 // unsubscribe from channel
 func (e *TarantoolEngine) unsubscribe(chID ChannelID) (err error) {
-	logger.DEBUG.Printf("unsubscribe: %v\n", chID)
-
 	uid, ringno, err := parseChannelID(chID)
 	if err != nil {
 		return
@@ -174,6 +168,7 @@ func (e *TarantoolEngine) unsubscribe(chID ChannelID) (err error) {
 	
 	conn, err := e.pool.get()
 	if err != nil {
+		logger.ERROR.Printf("unsubscribe tarantool pool error: %v\n", err.Error())
 		return
 	}
 
@@ -210,8 +205,6 @@ func (e *TarantoolEngine) addHistory(chID ChannelID, message Message, size, life
 // return empty slice
 // all history pushed via publish
 func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
-	logger.DEBUG.Printf("history: %v\n", chID)
-
 	uid, ringno, err := parseChannelID(chID)
 	if err != nil {
 		logger.ERROR.Printf("history parse chID error: %v\n", err.Error())
@@ -220,7 +213,7 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 
 	conn, err := e.pool.get()
 	if err != nil {
-		logger.ERROR.Printf("history get conn error: %v\n", err.Error())
+		logger.ERROR.Printf("history tarantool pool error: %v\n", err.Error())
 		return nil, err
 	}
 
