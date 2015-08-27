@@ -265,67 +265,73 @@ func (e *TarantoolEngine) addHistory(chID ChannelID, message Message, size, life
 // getHistory returns history messages for channel
 // return empty slice
 // all history pushed via publish
-
-type tarantoolHistoryItem struct {
-	counter string
-	status string
-	id string
-}
-
-func (h *tarantoolHistoryItem) MarshalJSON() ([]byte, error) {
-	return json.Marshal(h)
-}
-
 func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 	logger.DEBUG.Printf("history: %v\n", chID)
 
 	uid, ringno, err := parseChannelID(chID)
 	if err != nil {
 		logger.ERROR.Printf("history parse chID error: %v\n", err.Error())
-		return
+		return nil, err
 	}
 
 	conn, err := e.pool.get()
 	if err != nil {
 		logger.ERROR.Printf("history get conn error: %v\n", err.Error())
-		return
+		return nil, err
 	}
 
-	result, err := conn.Call("notification_read", []interface{}{uid, ringno, e.endpoint});
+	history, err := conn.Call("notification_read", []interface{}{uid, ringno, e.endpoint});
 	if err != nil {
-		logger.ERROR.Printf("history call stored proc error: %v\n", err.Error())
+		logger.ERROR.Printf("history notification_read error: %v\n", err.Error())
+		return nil, err
 	}
 
-	logger.DEBUG.Printf("conn.Call returned [history]: %v\n", result.Data)
-
-	if len(result.Data) == 0 {
-		return 	// check result is empty
-	}
-	
-	logger.DEBUG.Printf("%t", result.Data)
-
-	data := result.Data[0]
-	
-	// logger.DEBUG.Printf("%t", data)
-
-
-	/*
-	if len(ring) == 0 {	
-		return	// check ring is empty
-	}*/
-
-	/*
-	for _, id := range ring[1:] {
-		encoded, _ := json.Marshal( tarantoolHistoryItem {counter: string(ring[0]), status: string(id[0]), id: string(id[1:])} )
-		rawMessage := json.RawMessage(encoded)
-		msg := Message{ Data: &rawMessage }
-		msgs = append(msgs, msg)
-	}*/
-	
-	return
+	return processHistory(history)
 }
 
 // helpers
+
+type tarantoolHistoryItem struct {
+	Counter int64
+	Status string
+	ID string
+}
+
+func processHistory(history *tarantool.Response) (msgs []Message, err error) {
+	if len(history.Data) == 0 {
+		return 	// history is empty
+	}
+	
+	data := history.Data[0].([]interface {})
+	if len(data) != 2 {
+		return // history is empty
+	}
+
+	counter := data[0].(int64)				// ring counter
+	buffer := data[1].(string)				// string buffer
+	ring := strings.Split(buffer[1:], ",")	// array of IDs
+	
+	if len(ring) == 0 {	
+		return	// history buffer is empty [useless?]
+	}
+
+	for _, id := range ring {
+		encoded, err := json.Marshal(tarantoolHistoryItem{
+			Counter: counter, // redundancy in each item
+			Status: string(id[0]),
+			ID: string(id[1:]),	
+		})
+		if err != nil {
+			logger.ERROR.Println(err)
+			continue
+		}
+		rawMessage := json.RawMessage([]byte(encoded))
+		msgs = append(msgs, Message{ Data: &rawMessage })
+	}
+
+	return
+}
+
 func parseChannelID(chID ChannelID) (uid, ringno int64, err error) {
 	// split chID <blahblah>.[$]<uid>:<ringno>
 	str := string(chID)
