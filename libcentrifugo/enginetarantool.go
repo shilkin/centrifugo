@@ -11,18 +11,18 @@ import (
 
 
 func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
-	if p.conn == nil {
+	/*if p.conn == nil {
 		return nil, errors.New("Empty pool")
 	}
-	return p.conn, nil
+	return p.conn, nil*/
 
-	/*if len(p.pool) == 0 {
+	if len(p.pool) == 0 {
 		return nil, errors.New("Empty tarantool pool")
 	}
 	conn = p.pool[p.current]
 	p.current++
 	p.current = (p.current)%len(p.pool)
-	return */
+	return
 }
 
 type TarantoolEngine struct {
@@ -31,14 +31,16 @@ type TarantoolEngine struct {
 	endpoint string
 }
 
-type TarantoolPool struct {
-	conn *tarantool.Connection
-	config TarantoolPoolConfig
-}
-
 type TarantoolEngineConfig struct {
 	PoolConfig TarantoolPoolConfig
 	Endpoint string	
+}
+
+type TarantoolPool struct {
+	// conn *tarantool.Connection
+	pool []*tarantool.Connection
+	config TarantoolPoolConfig
+	current int
 }
 
 type TarantoolPoolConfig struct {
@@ -46,6 +48,7 @@ type TarantoolPoolConfig struct {
 	PoolSize int
 	Opts tarantool.Opts
 }
+
 
 /*
 		{
@@ -101,8 +104,10 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 }
 
 func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) {
+	/*
 	// var err error
 	p = new(TarantoolPool)
+	
 	p.config = config
 	p.conn, err = tarantool.Connect(config.Address, config.Opts)
 
@@ -112,8 +117,8 @@ func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) 
 	}	
 
 	return
+	*/
 
-	/*
 	if config.PoolSize == 0 {
 		return nil, errors.New("Size of tarantool pool is zero")
 	}
@@ -124,13 +129,13 @@ func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) 
 	}
 
 	for i := 0; i < config.PoolSize; i++ {
-		p.pool[i], err = tarantool.Connect(config.Address, config.Opts) // tmp ignore error
+		p.pool[i], err = tarantool.Connect(config.Address, config.Opts)
 		if err != nil {
 			return
 		}
 	}
+
 	return p, nil
-	*/
 }
 
 // getName returns a name of concrete engine implementation
@@ -148,6 +153,7 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 	// Process service messages
 	if chID != e.app.config.ControlChannel && chID != e.app.config.AdminChannel {
+		logger.DEBUG.Printf("piblish: %v\n", chID)
 		if further, err := e.processMessage(chID, message); !further {
 			return err // if no need further processing
 		}
