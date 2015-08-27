@@ -11,11 +11,6 @@ import (
 
 
 func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
-	/*if p.conn == nil {
-		return nil, errors.New("Empty pool")
-	}
-	return p.conn, nil*/
-
 	if len(p.pool) == 0 {
 		return nil, errors.New("Empty tarantool pool")
 	}
@@ -50,29 +45,29 @@ type TarantoolPoolConfig struct {
 }
 
 
-/*
-		{
-			"body": {
-				"uid":"026c380d-13e1-47d9-42d2-e2dc0e41e8d5",
-				"timestamp":"1440434259",
-				"info":{
-					"user":"3",
-					"client":"83309b33-deb7-48ff-76c6-04b10e6a6523",
-					"default_info":null,
-					"channel_info": {
-						"channel_extra_info_example":"you can add additional JSON data when authorizing"
-					}
-				},
-				"channel":"$3_0",
-				"data": {
-						"Action":"mark",
-						"Data":["00000000000000395684"]
-					},
-				"client":"83309b33-deb7-48ff-76c6-04b10e6a6523"
+/* MessageType
+{
+	"body": {
+		"uid":"026c380d-13e1-47d9-42d2-e2dc0e41e8d5",
+		"timestamp":"1440434259",
+		"info":{
+			"user":"3",
+			"client":"83309b33-deb7-48ff-76c6-04b10e6a6523",
+			"default_info":null,
+			"channel_info": {
+				"channel_extra_info_example":"you can add additional JSON data when authorizing"
+			}
+		},
+		"channel":"$3_0",
+		"data": {
+				"Action":"mark",
+				"Data":["00000000000000395684"]
 			},
-			"error":null,
-			"method":"message"
-		}
+		"client":"83309b33-deb7-48ff-76c6-04b10e6a6523"
+	},
+	"error":null,
+	"method":"message"
+}
 */
 
 type MessageType struct {
@@ -104,21 +99,6 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 }
 
 func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) {
-	/*
-	// var err error
-	p = new(TarantoolPool)
-	
-	p.config = config
-	p.conn, err = tarantool.Connect(config.Address, config.Opts)
-
-	if err != nil {
-		logger.ERROR.Printf("tarantool.Connect: %v", err.Error())
-		return
-	}	
-
-	return
-	*/
-
 	if config.PoolSize == 0 {
 		return nil, errors.New("Size of tarantool pool is zero")
 	}
