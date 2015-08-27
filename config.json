@@ -9,8 +9,8 @@
       "anonymous": false,
       "publish": true,
       "watch": true,
-      "presence": true,
-      "join_leave": true,
+      "presence": false,
+      "join_leave": false,
       "history_size": 1000,
       "history_lifetime": 1000,
       "namespaces": []
