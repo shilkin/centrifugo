@@ -73,19 +73,9 @@ type TarantoolPoolConfig struct {
 */
 
 type MessageType struct {
-	Body BodyType
-	Error string
-	Method string	
-}
-
-type BodyType struct {
-	Uid string
-	Timestamp string
-	Info json.RawMessage
-
-	Channel string
-	Data json.RawMessage
-	Client string
+	Body Message
+	Error string    `json:error`
+	Method string	`json:method`
 }
 
 type ServiceMessage struct {
@@ -158,40 +148,8 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 	// Process service messages
 	if chID != e.app.config.ControlChannel && chID != e.app.config.AdminChannel {
-		var msg MessageType
-		err := json.Unmarshal(message, &msg)
-		if err == nil {
-			var srv ServiceMessage
-			err = json.Unmarshal(msg.Body.Data, &srv)
-			if srv.Action != "" && err == nil {
-				var functionName string
-
-				switch(srv.Action) {
-				case "mark": 
-					functionName = "notification_mark"
-				case "push":
-					functionName = "notification_push"
-				default:
-					return e.app.handleMsg(chID, message)	
-				}
-				uid, ringno, err := parseChannelID(chID)
-				if err != nil {
-					logger.DEBUG.Println("Wow!")
-					return err
-				}
-				conn, err := e.pool.get()
-				if err != nil {
-					return err
-				}
-
-				for _, id := range(srv.Data) {
-					_, err = conn.Call(functionName, []interface{}{uid, ringno, id})
-					if err != nil {
-						logger.ERROR.Printf("%s\n", err.Error())
-					}
-				}
-				return nil
-			}
+		if further, err := e.processMessage(chID, message); !further {
+			return err // if no need further processing
 		}
 	}
 	// All other messages
@@ -292,9 +250,9 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 // helpers
 
 type tarantoolHistoryItem struct {
-	Counter int64
-	Status string
-	ID string
+	Count int64    `json:count`
+	Status string  `json:status`
+	ID string      `json:id`
 }
 
 func processHistory(history *tarantool.Response) (msgs []Message, err error) {
@@ -307,7 +265,7 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 		return // history is empty
 	}
 
-	counter := data[0].(int64)				// ring counter
+	count := data[0].(int64)				// ring counter
 	buffer := data[1].(string)				// string buffer
 	ring := strings.Split(buffer[1:], ",")	// array of IDs
 	
@@ -317,7 +275,7 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 
 	for _, id := range ring {
 		encoded, err := json.Marshal(tarantoolHistoryItem{
-			Counter: counter, // redundancy in each item
+			Count: count, // redundancy in each item to pass number of unread notificatins
 			Status: string(id[0]),
 			ID: string(id[1:]),	
 		})
@@ -330,6 +288,56 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 	}
 
 	return
+}
+
+func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFurtherProcessing bool, err error) {
+	var msg MessageType
+	err = json.Unmarshal(message, &msg)
+	if err != nil {
+		return true, err
+	}
+
+	var srv ServiceMessage
+	err = json.Unmarshal(*msg.Body.Data, &srv)
+	if err != nil {
+		return true, err
+	}
+
+	if srv.Action == "" {
+		return true, nil
+	}
+
+	var functionName string
+	switch(srv.Action) {
+	case "mark": 
+		functionName = "notification_mark"
+	case "push":
+		functionName = "notification_push"
+	default:
+		return true, nil
+	}
+
+	var uid, ringno int64
+	uid, ringno, err = parseChannelID(chID)
+	if err != nil {
+		return
+	}
+
+	var conn *tarantool.Connection
+	conn, err = e.pool.get()
+	if err != nil {
+		return
+	}
+
+	for _, id := range(srv.Data) {
+		_, err = conn.Call(functionName, []interface{}{uid, ringno, id})
+		if err != nil {
+			logger.ERROR.Printf("%s call error: %s", functionName, err)
+			return
+		}
+	}
+
+	return	
 }
 
 func parseChannelID(chID ChannelID) (uid, ringno int64, err error) {
