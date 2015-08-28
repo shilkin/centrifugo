@@ -261,7 +261,7 @@ func Main() {
 							viper.GetString("tt_password"),
 						},
 					},
-					Endpoint: fmt.Sprintf("http://%s:8000/api/notifications", hostname), // , viper.GetInt("port")),
+					Endpoint: fmt.Sprintf("http://%s:%s/api/notifications", hostname,  viper.GetString("port")),
 				}
 				e = libcentrifugo.NewTarantoolEngine(app, config)
 			default:
