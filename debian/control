@@ -1,0 +1,23 @@
+Source: centrifugo
+Priority: optional
+Maintainer: Vitaly Isaev <isaev@corp.sputnik.ru>
+Build-Depends: debhelper (>= 9), cmake
+Standards-Version: 3.9.5
+Section: libs
+Homepage: https://github.com/shilkin/centrifugo
+Vcs-Browser: https://github.com/shilkin/centrifugo
+
+Package: mailpaas-centrifugo
+Section: libdevel
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Messaging service
+ Messaging service
+
+Package: mailpaas-centrifugo-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: mailpaas-centrifugo (= ${binary:Version}), ${misc:Depends}
+Description: Messaging service
+ Messaging service
