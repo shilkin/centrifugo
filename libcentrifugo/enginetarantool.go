@@ -32,7 +32,6 @@ type TarantoolEngineConfig struct {
 }
 
 type TarantoolPool struct {
-	// conn *tarantool.Connection
 	pool []*tarantool.Connection
 	config TarantoolPoolConfig
 	current int
@@ -217,7 +216,7 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 		return nil, err
 	}
 
-	history, err := conn.Call("notification_read", []interface{}{uid, ringno, e.endpoint});
+	history, err := conn.Call("notification_read", []interface{}{uid, ringno});
 	if err != nil {
 		logger.ERROR.Printf("history notification_read error: %v\n", err.Error())
 		return nil, err
