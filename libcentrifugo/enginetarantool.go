@@ -228,7 +228,7 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 // helpers
 
 type tarantoolHistoryItem struct {
-	Count int64    `json:count`
+	Count uint64    `json:count`
 	Status string  `json:status`
 	ID string      `json:id`
 }
