@@ -243,7 +243,7 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 		return // history is empty
 	}
 
-	count := data[0].(int64)				// ring counter
+	count := data[0].(uint64)				// ring counter
 	buffer := data[1].(string)				// string buffer
 	ring := strings.Split(buffer[1:], ",")	// array of IDs
 	
