@@ -1,3 +1,9 @@
+centrifugo (0.1.0ubuntu5) utopic; urgency=medium
+
+  * Fix problem with casting counter to int64/uint64
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Fri, 04 Sep 2015 17:31:57 +0300
+
 centrifugo (0.1.0ubuntu4) utopic; urgency=medium
 
   * Счётчик кастится к uint64
