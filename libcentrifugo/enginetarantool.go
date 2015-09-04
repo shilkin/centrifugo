@@ -1,14 +1,13 @@
 package libcentrifugo
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/shilkin/go-tarantool"
-	"errors"
-	"strings"
 	"strconv"
-	"encoding/json"
+	"strings"
 )
-
 
 func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
 	if len(p.pool) == 0 {
@@ -16,33 +15,32 @@ func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
 	}
 	conn = p.pool[p.current]
 	p.current++
-	p.current = (p.current)%len(p.pool)
+	p.current = (p.current) % len(p.pool)
 	return
 }
 
 type TarantoolEngine struct {
-	app  *Application
-	pool *TarantoolPool
+	app      *Application
+	pool     *TarantoolPool
 	endpoint string
 }
 
 type TarantoolEngineConfig struct {
 	PoolConfig TarantoolPoolConfig
-	Endpoint string	
+	Endpoint   string
 }
 
 type TarantoolPool struct {
-	pool []*tarantool.Connection
-	config TarantoolPoolConfig
+	pool    []*tarantool.Connection
+	config  TarantoolPoolConfig
 	current int
 }
 
 type TarantoolPoolConfig struct {
-	Address string
+	Address  string
 	PoolSize int
-	Opts tarantool.Opts
+	Opts     tarantool.Opts
 }
-
 
 /* MessageType
 {
@@ -70,14 +68,14 @@ type TarantoolPoolConfig struct {
 */
 
 type MessageType struct {
-	Body Message
-	Error string    `json:error`
-	Method string	`json:method`
+	Body   Message
+	Error  string `json:error`
+	Method string `json:method`
 }
 
 type ServiceMessage struct {
 	Action string
-	Data []string
+	Data   []string
 }
 
 type IDs []string
@@ -89,8 +87,8 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 	}
 
 	e := &TarantoolEngine{
-		app: app,
-		pool: pool,
+		app:      app,
+		pool:     pool,
 		endpoint: conf.Endpoint,
 	}
 
@@ -101,9 +99,9 @@ func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) 
 	if config.PoolSize == 0 {
 		return nil, errors.New("Size of tarantool pool is zero")
 	}
- 	
- 	p = &TarantoolPool{
-		pool: make([]*tarantool.Connection, config.PoolSize),
+
+	p = &TarantoolPool{
+		pool:   make([]*tarantool.Connection, config.PoolSize),
 		config: config,
 	}
 
@@ -125,7 +123,7 @@ func (e *TarantoolEngine) name() string {
 // publish allows to send message into channel
 func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 	/*
-		message: 
+		message:
 			action: mark, push
 			params:	[id,...]
 	*/
@@ -142,7 +140,7 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 // subscribe on channel
 func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
-	uid, ringno, err := parseChannelID(chID)
+	uid, ringno, project, err := parseChannelID(chID)
 	if err != nil {
 		return
 	}
@@ -153,33 +151,33 @@ func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
 		return
 	}
 
-	_, err = conn.Call("notification_subscribe",  []interface{}{uid, ringno, e.endpoint});
+	_, err = conn.Call("notification_subscribe", []interface{}{uid, ringno, e.endpoint + "/api/" + project})
 
 	return
 }
 
 // unsubscribe from channel
 func (e *TarantoolEngine) unsubscribe(chID ChannelID) (err error) {
-	uid, ringno, err := parseChannelID(chID)
+	uid, ringno, project, err := parseChannelID(chID)
 	if err != nil {
 		return
 	}
-	
+
 	conn, err := e.pool.get()
 	if err != nil {
 		logger.ERROR.Printf("unsubscribe tarantool pool error: %v\n", err.Error())
 		return
 	}
 
-	_, err = conn.Call("notification_unsubscribe", []interface{}{uid, ringno, e.endpoint});
+	_, err = conn.Call("notification_unsubscribe", []interface{}{uid, ringno, e.endpoint + "/api/" + project})
 
-	return	
+	return
 }
 
 // addPresence sets or updates presence info for connection with uid
 func (e *TarantoolEngine) addPresence(chID ChannelID, uid ConnID, info ClientInfo) (err error) {
 	// not implemented
-	return 
+	return
 }
 
 // removePresence removes presence information for connection with uid
@@ -204,7 +202,7 @@ func (e *TarantoolEngine) addHistory(chID ChannelID, message Message, size, life
 // return empty slice
 // all history pushed via publish
 func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
-	uid, ringno, err := parseChannelID(chID)
+	uid, ringno, _, err := parseChannelID(chID)
 	if err != nil {
 		logger.ERROR.Printf("history parse chID error: %v\n", err.Error())
 		return nil, err
@@ -216,7 +214,7 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 		return nil, err
 	}
 
-	history, err := conn.Call("notification_read", []interface{}{uid, ringno});
+	history, err := conn.Call("notification_read", []interface{}{uid, ringno})
 	if err != nil {
 		logger.ERROR.Printf("history notification_read error: %v\n", err.Error())
 		return nil, err
@@ -228,41 +226,43 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 // helpers
 
 type tarantoolHistoryItem struct {
-	Count uint64    `json:count`
-	Status string  `json:status`
-	ID string      `json:id`
+	Count  interface{} `json:count`
+	Status string      `json:status`
+	ID     string      `json:id`
 }
 
 func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 	if len(history.Data) == 0 {
-		return 	// history is empty
+		return // history is empty
 	}
-	
-	data := history.Data[0].([]interface {})
+
+	data := history.Data[0].([]interface{})
 	if len(data) != 2 {
 		return // history is empty
 	}
 
-	count := data[0].(uint64)				// ring counter
-	buffer := data[1].(string)				// string buffer
-	ring := strings.Split(buffer[1:], ",")	// array of IDs
-	
-	if len(ring) == 0 {	
-		return	// history buffer is empty [useless?]
+	logger.DEBUG.Printf("history: %t", data)
+
+	count := data[0]                       // .(uint64)				// ring counter
+	buffer := data[1].(string)             // string buffer
+	ring := strings.Split(buffer[1:], ",") // array of IDs
+
+	if len(ring) == 0 {
+		return // history buffer is empty [useless?]
 	}
 
 	for _, id := range ring {
 		encoded, err := json.Marshal(tarantoolHistoryItem{
-			Count: count, // redundancy in each item to pass number of unread notificatins
+			Count:  count, // redundancy in each item to pass number of unread notificatins
 			Status: string(id[0]),
-			ID: string(id[1:]),	
+			ID:     string(id[1:]),
 		})
 		if err != nil {
 			logger.ERROR.Println(err)
 			continue
 		}
 		rawMessage := json.RawMessage([]byte(encoded))
-		msgs = append(msgs, Message{ Data: &rawMessage })
+		msgs = append(msgs, Message{Data: &rawMessage})
 	}
 
 	return
@@ -286,8 +286,8 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 	}
 
 	var functionName string
-	switch(srv.Action) {
-	case "mark": 
+	switch srv.Action {
+	case "mark":
 		functionName = "notification_mark"
 	case "push":
 		functionName = "notification_push"
@@ -296,7 +296,7 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 	}
 
 	var uid, ringno int64
-	uid, ringno, err = parseChannelID(chID)
+	uid, ringno, _, err = parseChannelID(chID)
 	if err != nil {
 		return
 	}
@@ -307,7 +307,7 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 		return
 	}
 
-	for _, id := range(srv.Data) {
+	for _, id := range srv.Data {
 		_, err = conn.Call(functionName, []interface{}{uid, ringno, id})
 		if err != nil {
 			logger.ERROR.Printf("%s call error: %s", functionName, err)
@@ -315,17 +315,27 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 		}
 	}
 
-	return	
+	return
 }
 
-func parseChannelID(chID ChannelID) (uid, ringno int64, err error) {
-	// split chID <blahblah>.[$]<uid>:<ringno>
+func parseChannelID(chID ChannelID) (uid, ringno int64, project string, err error) {
+	// split chID <blahblah>.<project>.[$]<uid>_<ringno>
 	str := string(chID)
+	logger.DEBUG.Printf("parseChannelID %s", str)
+	result := strings.Split(str, ".")
 
-	dotIndex := strings.LastIndex(str, ".")
+	if len(result) != 3 {
+		logger.DEBUG.Printf("unexpected ChannelID %s", str)
+		return
+	}
+
+	project = result[1]
+	str = result[2]
+
+	/*dotIndex := strings.LastIndex(str, ".")
 	if dotIndex >= 0 {
 		str = str[dotIndex+1:]
-	}
+	}*/
 
 	separator := "_"
 	prefix := "$"
@@ -342,5 +352,5 @@ func parseChannelID(chID ChannelID) (uid, ringno int64, err error) {
 	if err != nil {
 		return
 	}
-	return uid, ringno, nil
+	return
 }

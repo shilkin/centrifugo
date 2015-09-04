@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/garyburd/redigo/internal/redistest"
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/garyburd/redigo/redis"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/garyburd/redigo/internal/redistest"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/garyburd/redigo/redis"
 )
 
 var writeTests = []struct {

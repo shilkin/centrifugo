@@ -147,15 +147,15 @@ func Main() {
 
 			// Tarantool defaults
 			/*
-			viper.SetDefault("tt_pool", 2)
-			viper.SetDefault("tt_host", "127.0.0.1")
-			viper.SetDefault("tt_port", "3301")
-			viper.SetDefault("tt_user", "")
-			viper.SetDefault("tt_password", "")
-			viper.SetDefault("tt_timeout_response", 500)
-			viper.SetDefault("tt_timeout_reconnect", 500)
+				viper.SetDefault("tt_pool", 2)
+				viper.SetDefault("tt_host", "127.0.0.1")
+				viper.SetDefault("tt_port", "3301")
+				viper.SetDefault("tt_user", "")
+				viper.SetDefault("tt_password", "")
+				viper.SetDefault("tt_timeout_response", 500)
+				viper.SetDefault("tt_timeout_reconnect", 500)
 			*/
-			
+
 			viper.SetEnvPrefix("centrifugo")
 			viper.BindEnv("engine")
 			viper.BindEnv("insecure")
@@ -200,7 +200,6 @@ func Main() {
 			viper.BindPFlag("tt_password", cmd.Flags().Lookup("tt_password"))
 			viper.BindPFlag("tt_timeout_response", cmd.Flags().Lookup("tt_timeout_request"))
 			viper.BindPFlag("tt_timeout_reconnect", cmd.Flags().Lookup("tt_timeout_reconnect"))
-
 
 			err := validateConfig(configFile)
 			if err != nil {
@@ -257,7 +256,7 @@ func Main() {
 				}
 				config := libcentrifugo.TarantoolEngineConfig{
 					PoolConfig: libcentrifugo.TarantoolPoolConfig{
-						Address: viper.GetString("tt_host") + ":" + viper.GetString("tt_port"),
+						Address:  viper.GetString("tt_host") + ":" + viper.GetString("tt_port"),
 						PoolSize: viper.GetInt("tt_pool"),
 						Opts: tarantool.Opts{
 							time.Duration(viper.GetInt("tt_timeout_response")) * time.Millisecond,
@@ -266,7 +265,7 @@ func Main() {
 							viper.GetString("tt_password"),
 						},
 					},
-					Endpoint: fmt.Sprintf("http://%s:%s/api/notifications", hostname,  viper.GetString("port")),
+					Endpoint: fmt.Sprintf("http://%s:%s", hostname, viper.GetString("port")),
 				}
 				e = libcentrifugo.NewTarantoolEngine(app, config)
 			default:

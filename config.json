@@ -4,7 +4,7 @@
   "web_secret": "0",
   "projects": [
     {
-      "name": "notifications",
+      "name": "notification",
       "secret": "0",
       "anonymous": false,
       "publish": true,

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 )
 
 func testMemoryEngine() *MemoryEngine {

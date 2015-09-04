@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/spf13/pflag"
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/pflag"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 )
 
 var yamlExample = []byte(`Hacker: true

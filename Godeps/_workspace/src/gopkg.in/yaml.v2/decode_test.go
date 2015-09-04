@@ -2,7 +2,7 @@ package yaml_test
 
 import (
 	"errors"
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/gopkg.in/yaml.v2"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/gopkg.in/yaml.v2"
 	. "gopkg.in/check.v1"
 	"math"
 	"net"

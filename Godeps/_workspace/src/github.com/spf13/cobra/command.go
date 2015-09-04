@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	flag "github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/spf13/pflag"
+	flag "github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/pflag"
 )
 
 // Command is just that, a command for your application.

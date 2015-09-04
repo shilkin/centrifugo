@@ -21,11 +21,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/BurntSushi/toml"
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/magiconair/properties"
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/spf13/cast"
-	jww "github.com/centrifugal/centrifugo/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
-	"github.com/centrifugal/centrifugo/Godeps/_workspace/src/gopkg.in/yaml.v2"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/BurntSushi/toml"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/magiconair/properties"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/cast"
+	jww "github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/gopkg.in/yaml.v2"
 )
 
 type // Denotes failing to parse configuration file.
