@@ -228,7 +228,7 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 // helpers
 
 type tarantoolHistoryItem struct {
-	Count uint64    `json:count`
+	Count interface{}    `json:count`
 	Status string  `json:status`
 	ID string      `json:id`
 }
@@ -243,7 +243,7 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 		return // history is empty
 	}
 
-	count := data[0].(uint64)				// ring counter
+	count := data[0]						// ring counter
 	buffer := data[1].(string)				// string buffer
 	ring := strings.Split(buffer[1:], ",")	// array of IDs
 	
