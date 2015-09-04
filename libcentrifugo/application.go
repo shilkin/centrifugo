@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/gorilla/securecookie"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/nu7hatch/gouuid"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/gorilla/securecookie"
-	"github.com/nu7hatch/gouuid"
 )
 
 // Application is a heart of Centrifugo – it internally manages connection, subscription
@@ -812,8 +812,16 @@ const (
 	AuthTokenValue = "authorized"
 )
 
-// checkAuthToken checks admin connection token which Centrifugo returns after admin login
-func (app *Application) checkAuthToken(token string) error {
+func (app *Application) adminAuthToken() (string, error) {
+	app.RLock()
+	secret := app.config.WebSecret
+	app.RUnlock()
+	s := securecookie.New([]byte(secret), nil)
+	return s.Encode(AuthTokenKey, AuthTokenValue)
+}
+
+// checkAdminAuthToken checks admin connection token which Centrifugo returns after admin login
+func (app *Application) checkAdminAuthToken(token string) error {
 
 	app.RLock()
 	secret := app.config.WebSecret

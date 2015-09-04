@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/nu7hatch/gouuid"
 	"github.com/shilkin/centrifugo/libcentrifugo/auth"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/shilkin/centrifugo/libcentrifugo/stringqueue"
-	"github.com/nu7hatch/gouuid"
 )
 
 const (
