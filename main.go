@@ -108,6 +108,7 @@ func Main() {
 	var ttPool int
 	var ttTimeoutResponse int
 	var ttTimeoutReconnect int
+	var ttMaxReconnect uint
 
 	var rootCmd = &cobra.Command{
 		Use:   "",
@@ -200,6 +201,7 @@ func Main() {
 			viper.BindPFlag("tt_password", cmd.Flags().Lookup("tt_password"))
 			viper.BindPFlag("tt_timeout_response", cmd.Flags().Lookup("tt_timeout_request"))
 			viper.BindPFlag("tt_timeout_reconnect", cmd.Flags().Lookup("tt_timeout_reconnect"))
+			viper.BindPFlag("tt_max_reconnect", cmd.Flags().Lookup("tt_max_reconnect"))
 
 			err := validateConfig(configFile)
 			if err != nil {
@@ -335,6 +337,7 @@ func Main() {
 	rootCmd.Flags().IntVarP(&ttPool, "tt_pool", "", 2, "tarantool connection pool size (Tarantool engine)")
 	rootCmd.Flags().IntVarP(&ttTimeoutResponse, "tt_timeout_response", "", 500, "timeout to wait response in milliseconds (Tarantool engine)")
 	rootCmd.Flags().IntVarP(&ttTimeoutReconnect, "tt_timeout_reconnect", "", 500, "timeout to wait until reconnection attempt in milliseconds (Tarantool engine)")
+	rootCmd.Flags().UintVarP(&ttMaxReconnect, "tt_max_reconnect", "", ^uint(0), "max number of reconnection attempts (Tarantool engine)")
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
