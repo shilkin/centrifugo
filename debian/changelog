@@ -1,3 +1,37 @@
+centrifugo (0.1.0ubuntu6) utopic; urgency=medium
+
+  [ FZambia ]
+  * update sockjs-go dependency to its latest v2 revision
+  * update viper dependency and handle ConfigPareseError
+  * godeps
+  * use packages from godep workspace
+  * update gorilla websocket
+  * update securecookie
+  * v0.2.4
+  * fix wrong names in comments
+  * tests for admin token and ping command
+  * recursively vendor dependencies
+  * add missing tests for logger
+  * write more tests
+  * more testing fo handlers
+
+  [ Alexandr Emelin ]
+  * test for AdminWebsocketHandler
+
+  [ FZambia ]
+  * test RedisEngine, check that Redis API message project is not empty
+  * more test coverage for memory engine
+  * better locking for redis engine
+
+  [ shilkin ]
+  * Merge remote-tracking branch 'upstream/master' into MERGE-UPSTREAM
+  * Убрана отладочная печать, скорректирован config.json
+  * Убран комментарий
+
+  [ FZambia ]
+
+ -- FZambia <autobuilder@corp.sputnik.ru>  Mon, 07 Sep 2015 14:03:16 +0300
+
 centrifugo (0.1.0ubuntu5) utopic; urgency=medium
 
   * Fix problem with casting counter to int64/uint64
