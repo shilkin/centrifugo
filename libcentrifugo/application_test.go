@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 )
 
 type testSession struct {
@@ -68,6 +68,30 @@ func TestUserAllowed(t *testing.T) {
 	assert.Equal(t, true, app.userAllowed("channel#1,2", "1"))
 	assert.Equal(t, true, app.userAllowed("channel#1,2", "2"))
 	assert.Equal(t, false, app.userAllowed("channel#1,2", "3"))
+}
+
+func TestSetConfig(t *testing.T) {
+	app := testApp()
+	c := newTestConfig()
+	app.SetConfig(c)
+}
+
+func TestAdminAuthToken(t *testing.T) {
+	app := testApp()
+	// first without secret set
+	token, err := app.adminAuthToken()
+	assert.Equal(t, nil, err)
+	assert.True(t, len(token) > 0)
+	err = app.checkAdminAuthToken("")
+	assert.Equal(t, ErrUnauthorized, err)
+	err = app.checkAdminAuthToken(token)
+	assert.Equal(t, ErrUnauthorized, err)
+	// now with secret set
+	app.config.WebSecret = "test"
+	token, err = app.adminAuthToken()
+	assert.Equal(t, nil, err)
+	err = app.checkAdminAuthToken(token)
+	assert.Equal(t, nil, err)
 }
 
 func TestClientAllowed(t *testing.T) {
@@ -131,6 +155,7 @@ func testWrongControlCmd(uid string) []byte {
 
 func TestControlMessages(t *testing.T) {
 	app := testApp()
+	app.Run()
 	// command from this node
 	cmd := testPingControlCmd(app.uid)
 	err := app.controlMsg(cmd)

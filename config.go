@@ -11,13 +11,12 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/nu7hatch/gouuid"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/viper" // newConfig creates new libcentrifugo.Config using viper.
 	"github.com/shilkin/centrifugo/libcentrifugo"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/nu7hatch/gouuid"
-	"github.com/spf13/viper"
 )
 
-// newConfig creates new libcentrifugo.Config using viper.
 func newConfig() *libcentrifugo.Config {
 	cfg := &libcentrifugo.Config{}
 	cfg.Version = VERSION
@@ -163,7 +162,12 @@ func validateConfig(f string) error {
 	v.SetConfigFile(f)
 	err := v.ReadInConfig()
 	if err != nil {
-		return errors.New("unable to locate config file, use \"centrifugo genconfig -c " + f + "\" command to generate one")
+		switch err.(type) {
+		case viper.ConfigParseError:
+			return err
+		default:
+			return errors.New("Unable to locate config file, use \"centrifugo genconfig -c " + f + "\" command to generate one")
+		}
 	}
 	s := structureFromConfig(v)
 	return s.Validate()

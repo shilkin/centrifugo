@@ -10,15 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/cobra"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/viper"
 	"github.com/shilkin/centrifugo/libcentrifugo"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/shilkin/go-tarantool"
 )
 
 const (
-	VERSION = "0.2.3"
+	VERSION = "0.2.4"
 )
 
 var configFile string
@@ -43,25 +43,30 @@ func handleSignals(app *libcentrifugo.Application) {
 	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, os.Interrupt)
 	for {
 		sig := <-sigc
-		logger.INFO.Println("signal received:", sig)
+		logger.INFO.Println("Signal received:", sig)
 		switch sig {
 		case syscall.SIGHUP:
 			// reload application configuration on SIGHUP
-			// note that you should run checkconfig before reloading configuration
-			// as Viper exits when encounters parsing errors
-			logger.INFO.Println("reloading configuration")
+			logger.INFO.Println("Reloading configuration")
 			err := viper.ReadInConfig()
 			if err != nil {
-				logger.CRITICAL.Println("unable to locate config file")
-				return
+				switch err.(type) {
+				case viper.ConfigParseError:
+					logger.CRITICAL.Printf("Error parsing configuration: %s\n", err)
+					continue
+				default:
+					logger.CRITICAL.Println("Unable to locate config file")
+					continue
+				}
 			}
 			setupLogging()
 			c := newConfig()
 			s := structureFromConfig(nil)
 			app.SetConfig(c)
 			app.SetStructure(s)
+			logger.INFO.Println("Configuration successfully reloaded")
 		case syscall.SIGINT, os.Interrupt:
-			logger.INFO.Println("shutting down")
+			logger.INFO.Println("Shutting down")
 			go time.AfterFunc(5*time.Second, func() {
 				os.Exit(1)
 			})
@@ -142,15 +147,15 @@ func Main() {
 
 			// Tarantool defaults
 			/*
-			viper.SetDefault("tt_pool", 2)
-			viper.SetDefault("tt_host", "127.0.0.1")
-			viper.SetDefault("tt_port", "3301")
-			viper.SetDefault("tt_user", "")
-			viper.SetDefault("tt_password", "")
-			viper.SetDefault("tt_timeout_response", 500)
-			viper.SetDefault("tt_timeout_reconnect", 500)
+				viper.SetDefault("tt_pool", 2)
+				viper.SetDefault("tt_host", "127.0.0.1")
+				viper.SetDefault("tt_port", "3301")
+				viper.SetDefault("tt_user", "")
+				viper.SetDefault("tt_password", "")
+				viper.SetDefault("tt_timeout_response", 500)
+				viper.SetDefault("tt_timeout_reconnect", 500)
 			*/
-			
+
 			viper.SetEnvPrefix("centrifugo")
 			viper.BindEnv("engine")
 			viper.BindEnv("insecure")
@@ -196,7 +201,6 @@ func Main() {
 			viper.BindPFlag("tt_timeout_response", cmd.Flags().Lookup("tt_timeout_request"))
 			viper.BindPFlag("tt_timeout_reconnect", cmd.Flags().Lookup("tt_timeout_reconnect"))
 
-
 			err := validateConfig(configFile)
 			if err != nil {
 				logger.FATAL.Fatalln(err)
@@ -205,7 +209,7 @@ func Main() {
 			viper.SetConfigFile(configFile)
 			err = viper.ReadInConfig()
 			if err != nil {
-				logger.FATAL.Fatalln("unable to locate config file")
+				logger.FATAL.Fatalln("Unable to locate config file")
 			}
 			setupLogging()
 
@@ -218,7 +222,7 @@ func Main() {
 			}
 
 			logger.INFO.Println("GOMAXPROCS set to", runtime.GOMAXPROCS(0))
-			logger.INFO.Println("using config file:", viper.ConfigFileUsed())
+			logger.INFO.Println("Using config file:", viper.ConfigFileUsed())
 
 			c := newConfig()
 			s := structureFromConfig(nil)
@@ -252,7 +256,7 @@ func Main() {
 				}
 				config := libcentrifugo.TarantoolEngineConfig{
 					PoolConfig: libcentrifugo.TarantoolPoolConfig{
-						Address: viper.GetString("tt_host") + ":" + viper.GetString("tt_port"),
+						Address:  viper.GetString("tt_host") + ":" + viper.GetString("tt_port"),
 						PoolSize: viper.GetInt("tt_pool"),
 						Opts: tarantool.Opts{
 							time.Duration(viper.GetInt("tt_timeout_response")) * time.Millisecond,
@@ -261,14 +265,14 @@ func Main() {
 							viper.GetString("tt_password"),
 						},
 					},
-					Endpoint: fmt.Sprintf("http://%s:%s/api/notifications", hostname,  viper.GetString("port")),
+					Endpoint: fmt.Sprintf("http://%s:%s", hostname, viper.GetString("port")),
 				}
 				e = libcentrifugo.NewTarantoolEngine(app, config)
 			default:
 				logger.FATAL.Fatalln("unknown engine: " + viper.GetString("engine"))
 			}
 
-			logger.INFO.Println("engine:", viper.GetString("engine"))
+			logger.INFO.Println("Engine:", viper.GetString("engine"))
 			logger.DEBUG.Printf("%v\n", viper.AllSettings())
 			logger.INFO.Println("Use SSL:", viper.GetBool("ssl"))
 			if viper.GetBool("ssl") {
@@ -290,7 +294,7 @@ func Main() {
 			mux := libcentrifugo.DefaultMux(app, viper.GetString("prefix"), viper.GetString("web"), viper.GetString("sockjs_url"))
 
 			addr := viper.GetString("address") + ":" + viper.GetString("port")
-			logger.INFO.Printf("start serving on %s\n", addr)
+			logger.INFO.Printf("Start serving on %s\n", addr)
 			if useSSL {
 				if err := http.ListenAndServeTLS(addr, sslCert, sslKey, mux); err != nil {
 					logger.FATAL.Fatalln("ListenAndServe:", err)

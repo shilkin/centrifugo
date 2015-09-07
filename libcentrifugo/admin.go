@@ -3,9 +3,9 @@ package libcentrifugo
 import (
 	"encoding/json"
 
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/nu7hatch/gouuid"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/gorilla/websocket"
-	"github.com/nu7hatch/gouuid"
 )
 
 // use interface to mimic websocket connection write method we use here
@@ -101,7 +101,7 @@ func (c *adminClient) handleMessage(msg []byte) (*response, error) {
 // registry if token correct
 func (c *adminClient) authCmd(cmd *authAdminCommand) (*response, error) {
 
-	err := c.app.checkAuthToken(cmd.Token)
+	err := c.app.checkAdminAuthToken(cmd.Token)
 	if err != nil {
 		return nil, ErrUnauthorized
 	}

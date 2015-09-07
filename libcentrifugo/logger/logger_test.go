@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 )
 
 func TestLevels(t *testing.T) {
@@ -19,7 +19,10 @@ func TestLevels(t *testing.T) {
 }
 
 func TestSetLogFile(t *testing.T) {
-	SetLogFile("/tmp/testing")
+	err := SetLogFile("/tmp/testing")
+	assert.Equal(t, nil, err)
+	err = SetLogFile("/i_want_it_to_not_exist_so_error_return/testing")
+	assert.NotEqual(t, nil, err)
 }
 
 func TestSetLogFlag(t *testing.T) {

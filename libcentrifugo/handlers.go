@@ -7,14 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/gopkg.in/igm/sockjs-go.v2/sockjs" // DefaultMux returns a mux including set of default handlers for Centrifugo server.
 	"github.com/shilkin/centrifugo/libcentrifugo/auth"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/websocket"
-	"gopkg.in/igm/sockjs-go.v2/sockjs"
 )
 
-// DefaultMux returns a mux including set of default handlers for Centrifugo server.
 func DefaultMux(app *Application, prefix, webDir, sockjsURL string) *http.ServeMux {
 
 	mux := http.NewServeMux()
@@ -49,7 +47,7 @@ func DefaultMux(app *Application, prefix, webDir, sockjsURL string) *http.ServeM
 // according to SockJS protocol.
 func NewSockJSHandler(app *Application, sockjsPrefix, sockjsUrl string) http.Handler {
 	if sockjsUrl != "" {
-		logger.INFO.Println("using SockJS url", sockjsUrl)
+		logger.INFO.Println("Using SockJS url", sockjsUrl)
 		sockjs.DefaultOptions.SockJSURL = sockjsUrl
 	}
 	return sockjs.NewHandler(sockjsPrefix, sockjs.DefaultOptions, app.sockJSHandler)
@@ -64,7 +62,7 @@ func (app *Application) sockJSHandler(s sockjs.Session) {
 		return
 	}
 	defer c.clean()
-	logger.INFO.Printf("new SockJS session established with uid %s\n", c.uid())
+	logger.INFO.Printf("New SockJS session established with uid %s\n", c.uid())
 
 	for {
 		if msg, err := s.Recv(); err == nil {
@@ -115,7 +113,7 @@ func (app *Application) RawWebsocketHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return
 	}
-	logger.INFO.Printf("new raw Websocket session established with uid %s\n", c.uid())
+	logger.INFO.Printf("New raw Websocket session established with uid %s\n", c.uid())
 	defer c.clean()
 
 	for {
@@ -256,10 +254,7 @@ func (app *Application) AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if password == app.config.WebPassword {
 		w.Header().Set("Content-Type", "application/json")
-		app.RLock()
-		s := securecookie.New([]byte(app.config.WebSecret), nil)
-		app.RUnlock()
-		token, err := s.Encode(AuthTokenKey, AuthTokenValue)
+		token, err := app.adminAuthToken()
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -279,7 +274,7 @@ func (app *Application) Authenticated(h http.Handler) http.Handler {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != "" {
 			token := strings.TrimPrefix(authHeader, "Token ")
-			err := app.checkAuthToken(token)
+			err := app.checkAdminAuthToken(token)
 			if err == nil {
 				h.ServeHTTP(w, r)
 				return
@@ -394,6 +389,9 @@ func (app *Application) ActionHandler(w http.ResponseWriter, r *http.Request) {
 			Channel: channel,
 		}
 		resp, err = app.historyCmd(project, cmd)
+	default:
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
 	}
 
 	if err != nil {
@@ -419,7 +417,7 @@ func (app *Application) AdminWebsocketHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		return
 	}
-	logger.INFO.Printf("new admin session established with uid %s\n", c.uid())
+	logger.INFO.Printf("New admin session established with uid %s\n", c.uid())
 	defer func() {
 		close(c.closeChan)
 		err := app.removeAdminConn(c)

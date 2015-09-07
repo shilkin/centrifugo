@@ -21,12 +21,22 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/BurntSushi/toml"
-	"github.com/magiconair/properties"
-	"github.com/spf13/cast"
-	jww "github.com/spf13/jwalterweatherman"
-	"gopkg.in/yaml.v2"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/BurntSushi/toml"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/magiconair/properties"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/cast"
+	jww "github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/gopkg.in/yaml.v2"
 )
+
+type // Denotes failing to parse configuration file.
+ConfigParseError struct {
+	err error
+}
+
+// Returns the formatted configuration error.
+func (pe ConfigParseError) Error() string {
+	return fmt.Sprintf("While parsing config: %s", pe.err.Error())
+}
 
 func insensitiviseMap(m map[string]interface{}) {
 	for key, val := range m {
@@ -119,31 +129,31 @@ func findCWD() (string, error) {
 	return path, nil
 }
 
-func marshallConfigReader(in io.Reader, c map[string]interface{}, configType string) {
+func marshallConfigReader(in io.Reader, c map[string]interface{}, configType string) error {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(in)
 
-	switch configType {
+	switch strings.ToLower(configType) {
 	case "yaml", "yml":
 		if err := yaml.Unmarshal(buf.Bytes(), &c); err != nil {
-			jww.ERROR.Fatalf("Error parsing config: %s", err)
+			return ConfigParseError{err}
 		}
 
 	case "json":
 		if err := json.Unmarshal(buf.Bytes(), &c); err != nil {
-			jww.ERROR.Fatalf("Error parsing config: %s", err)
+			return ConfigParseError{err}
 		}
 
 	case "toml":
 		if _, err := toml.Decode(buf.String(), &c); err != nil {
-			jww.ERROR.Fatalf("Error parsing config: %s", err)
+			return ConfigParseError{err}
 		}
 
 	case "properties", "props", "prop":
 		var p *properties.Properties
 		var err error
 		if p, err = properties.Load(buf.Bytes(), properties.UTF8); err != nil {
-			jww.ERROR.Fatalf("Error parsing config: %s", err)
+			return ConfigParseError{err}
 		}
 		for _, key := range p.Keys() {
 			value, _ := p.Get(key)
@@ -152,6 +162,7 @@ func marshallConfigReader(in io.Reader, c map[string]interface{}, configType str
 	}
 
 	insensitiviseMap(c)
+	return nil
 }
 
 func safeMul(a, b uint) uint {

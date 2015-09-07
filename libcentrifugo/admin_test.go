@@ -3,7 +3,8 @@ package libcentrifugo
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/gorilla/securecookie"
+	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/stretchr/testify/assert"
 )
 
 type testAdminSession struct{}
@@ -31,6 +32,7 @@ func newTestAdminClient() (*adminClient, error) {
 
 func TestAdminClient(t *testing.T) {
 	c, err := newTestAdminClient()
+	go c.writer()
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, c.uid(), "")
 	err = c.send("message")
@@ -52,4 +54,12 @@ func TestAdminClientMessageHandling(t *testing.T) {
 	emptyAuthMethod := "{\"method\":\"auth\", \"params\": {}}"
 	_, err = c.handleMessage([]byte(emptyAuthMethod))
 	assert.Equal(t, ErrUnauthorized, err)
+	s := securecookie.New([]byte(c.app.config.WebSecret), nil)
+	token, _ := s.Encode(AuthTokenKey, AuthTokenValue)
+	correctAuthMethod := "{\"method\":\"auth\", \"params\": {\"token\":\"" + token + "\"}}"
+	_, err = c.handleMessage([]byte(correctAuthMethod))
+	assert.Equal(t, nil, err)
+	pingCommand := "{\"method\":\"ping\", \"params\": {}}"
+	_, err = c.handleMessage([]byte(pingCommand))
+	assert.Equal(t, nil, err)
 }
