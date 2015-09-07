@@ -1,3 +1,9 @@
+centrifugo (0.1.0ubuntu7) utopic; urgency=medium
+
+  * main.go fixed
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Mon, 07 Sep 2015 20:22:30 +0300
+
 centrifugo (0.1.0ubuntu6) utopic; urgency=medium
 
   [ FZambia ]
