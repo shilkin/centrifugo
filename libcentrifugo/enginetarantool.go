@@ -317,11 +317,11 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 }
 
 func parseChannelID(chID ChannelID) (uid, ringno int64, project string, err error) {
-	// split chID <blahblah>.<project>.[$]<uid>_<ringno>
+	// split chID <centrifugo>.<project>.[$]<uid>_<ringno>
 	str := string(chID)
 	logger.DEBUG.Printf("parseChannelID %s", str)
-	result := strings.Split(str, ".")
 
+	result := strings.Split(str, ".")
 	if len(result) != 3 {
 		logger.DEBUG.Printf("unexpected ChannelID %s", str)
 		return
@@ -330,13 +330,9 @@ func parseChannelID(chID ChannelID) (uid, ringno int64, project string, err erro
 	project = result[1]
 	str = result[2]
 
-	/*dotIndex := strings.LastIndex(str, ".")
-	if dotIndex >= 0 {
-		str = str[dotIndex+1:]
-	}*/
-
 	separator := "_"
 	prefix := "$"
+
 	if strings.HasPrefix(str, prefix) {
 		str = strings.TrimLeft(str, prefix)
 	}
