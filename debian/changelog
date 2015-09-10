@@ -1,3 +1,9 @@
+centrifugo (0.1.0ubuntu8) utopic; urgency=medium
+
+  * MAILPAAS-504 | Переезд с shilkin/go-tarantool на tarantool/go-tarantool.
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Thu, 10 Sep 2015 12:12:11 +0300
+
 centrifugo (0.1.0ubuntu7) utopic; urgency=medium
 
   * main.go fixed
