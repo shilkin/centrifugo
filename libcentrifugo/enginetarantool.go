@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/shilkin/go-tarantool"
+	"github.com/tarantool/go-tarantool"
 	"strconv"
 	"strings"
 )
