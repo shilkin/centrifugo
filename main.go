@@ -14,7 +14,7 @@ import (
 	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/viper"
 	"github.com/shilkin/centrifugo/libcentrifugo"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
-	"github.com/shilkin/go-tarantool"
+	"github.com/tarantool/go-tarantool"
 )
 
 const (
@@ -263,6 +263,7 @@ func Main() {
 						Opts: tarantool.Opts{
 							time.Duration(viper.GetInt("tt_timeout_response")) * time.Millisecond,
 							time.Duration(viper.GetInt("tt_timeout_reconnect")) * time.Millisecond,
+							viper.GetSizeInBytes("tt_max_reconnect"),
 							viper.GetString("tt_user"),
 							viper.GetString("tt_password"),
 						},
