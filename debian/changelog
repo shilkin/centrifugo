@@ -1,3 +1,10 @@
+centrifugo (0.1.0ubuntu10) utopic; urgency=medium
+
+  * Version bump for Jenkins repair
+  * Version bump for Jenkins repair
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Thu, 05 Nov 2015 10:21:18 +0300
+
 centrifugo (0.1.0ubuntu9) utopic; urgency=medium
 
   * Jenkins bump
