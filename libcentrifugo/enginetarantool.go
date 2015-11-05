@@ -81,6 +81,7 @@ type ServiceMessage struct {
 type IDs []string
 
 func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *TarantoolEngine {
+	logger.INFO.Printf("Initializing tarantool connection pool...")
 	pool, err := newTarantoolPool(conf.PoolConfig)
 	if err != nil {
 		logger.FATAL.Fatalln(err)
@@ -106,10 +107,12 @@ func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) 
 	}
 
 	for i := 0; i < config.PoolSize; i++ {
+		logger.INFO.Printf("[%d] Connecting to tarantool on %s...", i, config.Address)
 		p.pool[i], err = tarantool.Connect(config.Address, config.Opts)
 		if err != nil {
 			return
 		}
+		logger.INFO.Printf("[%d] Connected to tarantool on %s", i, config.Address)
 	}
 
 	return p, nil
