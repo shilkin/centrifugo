@@ -1,3 +1,9 @@
+centrifugo (0.1.0ubuntu11) utopic; urgency=medium
+
+  * Additional logging during tarantool connection pool initialization
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Thu, 05 Nov 2015 13:01:07 +0300
+
 centrifugo (0.1.0ubuntu10) utopic; urgency=medium
 
   * Version bump for Jenkins repair
