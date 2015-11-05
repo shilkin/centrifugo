@@ -1,7 +1,7 @@
 Source: centrifugo
 Priority: optional
 Maintainer: Vitaly Isaev <isaev@corp.sputnik.ru>
-Build-Depends: debhelper (>= 9), cmake, dh-golang
+Build-Depends: debhelper (>= 9), cmake, dh-golang 
 Standards-Version: 3.9.5
 Section: libs
 Homepage: https://github.com/shilkin/centrifugo
