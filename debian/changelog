@@ -1,3 +1,10 @@
+centrifugo (0.1.0ubuntu12) utopic; urgency=medium
+
+  * MAILPAAS-1248| Blocking connect to each node of tarantool from pool
+  * MAILPAAS-1248| Blocking connect to each node of tarantool from pool: just skip an error in case of opts.Reconnect > 0
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Mon, 15 Feb 2016 17:41:05 +0300
+
 centrifugo (0.1.0ubuntu11) utopic; urgency=medium
 
   * Additional logging during tarantool connection pool initialization
