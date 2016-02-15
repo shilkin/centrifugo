@@ -7,6 +7,7 @@ import (
 	"github.com/tarantool/go-tarantool"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
@@ -108,9 +109,18 @@ func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) 
 
 	for i := 0; i < config.PoolSize; i++ {
 		logger.INFO.Printf("[%d] Connecting to tarantool on %s...", i, config.Address)
-		p.pool[i], err = tarantool.Connect(config.Address, config.Opts)
-		if err != nil {
-			return
+		for recons := 0; recons < config.Opts.MaxReconnects; recons++ {
+			// try until success
+			p.pool[i], err = tarantool.Connect(config.Address, config.Opts)
+			if err != nil {
+				err = p.pool[i].Close()
+				if err != nil {
+					logger.ERROR.Print(err)
+				}
+				time.Sleep(config.Opts.Reconnect)
+				continue // on error
+			}
+			break // on success
 		}
 		logger.INFO.Printf("[%d] Connected to tarantool on %s", i, config.Address)
 	}
