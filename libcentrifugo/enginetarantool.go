@@ -7,7 +7,6 @@ import (
 	"github.com/tarantool/go-tarantool"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
@@ -99,7 +98,8 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 
 func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) {
 	if config.PoolSize == 0 {
-		return nil, errors.New("Size of tarantool pool is zero")
+		err = errors.New("Size of tarantool pool is zero")
+		return
 	}
 
 	p = &TarantoolPool{
@@ -108,24 +108,18 @@ func newTarantoolPool(config TarantoolPoolConfig) (p *TarantoolPool, err error) 
 	}
 
 	for i := 0; i < config.PoolSize; i++ {
-		logger.INFO.Printf("[%d] Connecting to tarantool on %s...", i, config.Address)
-		for recons := 0; recons < config.Opts.MaxReconnects; recons++ {
-			// try until success
-			p.pool[i], err = tarantool.Connect(config.Address, config.Opts)
-			if err != nil {
-				err = p.pool[i].Close()
-				if err != nil {
-					logger.ERROR.Print(err)
-				}
-				time.Sleep(config.Opts.Reconnect)
-				continue // on error
-			}
-			break // on success
+		logger.INFO.Printf("[%d] Connecting to tarantool on %s... [%d]", i, config.Address, config.Opts.MaxReconnects)
+		p.pool[i], err = tarantool.Connect(config.Address, config.Opts)
+		if err != nil && config.Opts.Reconnect > 0 {
+			logger.ERROR.Printf("[%d] connection to tarantool on %s failed with '%s'", i, config.Address, err)
+			err = nil // just log and reset error: reconnection inside tarantool.Connect
 		}
-		logger.INFO.Printf("[%d] Connected to tarantool on %s", i, config.Address)
+		if err == nil {
+			logger.INFO.Printf("[%d] Connected to tarantool on %s", i, config.Address)
+		}
 	}
 
-	return p, nil
+	return
 }
 
 // getName returns a name of concrete engine implementation

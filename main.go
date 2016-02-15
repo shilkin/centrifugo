@@ -338,7 +338,7 @@ func Main() {
 	rootCmd.Flags().IntVarP(&ttPool, "tt_pool", "", 2, "tarantool connection pool size (Tarantool engine)")
 	rootCmd.Flags().IntVarP(&ttTimeoutResponse, "tt_timeout_response", "", 500, "timeout to wait response in milliseconds (Tarantool engine)")
 	rootCmd.Flags().IntVarP(&ttTimeoutReconnect, "tt_timeout_reconnect", "", 500, "timeout to wait until reconnection attempt in milliseconds (Tarantool engine)")
-	rootCmd.Flags().UintVarP(&ttMaxReconnect, "tt_max_reconnect", "", ^uint(0), "max number of reconnection attempts (Tarantool engine)")
+	rootCmd.Flags().UintVarP(&ttMaxReconnect, "tt_max_reconnect", "", 1<<32 - 1, "max number of reconnection attempts (Tarantool engine)") // uint32 max
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
