@@ -3,6 +3,7 @@ package libcentrifugo
 import (
 	"encoding/json"
 	"errors"
+	"github.com/shilkin/centrifugo/libcentrifugo/extender"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/tarantool/go-tarantool"
 	"strconv"
@@ -22,6 +23,7 @@ func (p *TarantoolPool) get() (conn *tarantool.Connection, err error) {
 type TarantoolEngine struct {
 	app      *Application
 	pool     *TarantoolPool
+	extender extender.Extender
 	endpoint string
 }
 
@@ -87,9 +89,15 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 		logger.FATAL.Fatalln(err)
 	}
 
+	extender, err := extender.New()
+	if err != nil {
+		logger.FATAL.Fatalln(err)
+	}
+
 	e := &TarantoolEngine{
 		app:      app,
 		pool:     pool,
+		extender: extender,
 		endpoint: conf.Endpoint,
 	}
 
@@ -137,9 +145,11 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 	// Process service messages
 	if chID != e.app.config.ControlChannel && chID != e.app.config.AdminChannel {
-		if further, err := e.processMessage(chID, message); !further {
+		further, newMessage, err := e.processMessage(chID, message)
+		if !further {
 			return err // if no need further processing
 		}
+		message = newMessage
 	}
 	// All other messages
 	return e.app.handleMsg(chID, message)
@@ -248,17 +258,17 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 		return // history is empty
 	}
 
-	count := data[0]						// ring counter
-	buffer := data[1].(string)				// string buffer
-	ring := strings.Split(buffer[1:], ",")	// array of IDs
-	
-	if len(ring) == 0 {	
-		return	// history buffer is empty [useless?]
+	count := data[0]                       // ring counter
+	buffer := data[1].(string)             // string buffer
+	ring := strings.Split(buffer[1:], ",") // array of IDs
+
+	if len(ring) == 0 {
+		return // history buffer is empty [useless?]
 	}
 
 	for _, id := range ring {
 		encoded, err := json.Marshal(tarantoolHistoryItem{
-			Count:  count, // redundancy in each item to pass number of unread notificatins
+			Count:  count, // redundancy in each item to pass number of unread notifications
 			Status: string(id[0]),
 			ID:     string(id[1:]),
 		})
@@ -273,22 +283,32 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 	return
 }
 
-func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFurtherProcessing bool, err error) {
+func (e *TarantoolEngine) extendMessage(chID ChannelID, message []byte) (newMessage []byte, err error) {
+	uid, _, _, err := parseChannelID(chID)
+	if err != nil {
+		return
+	}
+	return e.extender.Extend(message, uid)
+}
+
+func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFurtherProcessing bool, newMessage []byte, err error) {
+	newMessage = message // by default, but may be changed
+
 	var msg MessageType
 	err = json.Unmarshal(message, &msg)
 	if err != nil {
-		return true, err
+		return true, newMessage, err
 	}
 
 	var srv ServiceMessage
 	err = json.Unmarshal(*msg.Body.Data, &srv)
 	if err != nil {
-		return true, err
+		return true, newMessage, err
 	}
 
-	if srv.Action == "" {
-		return true, nil
-	}
+	//	if srv.Action == "" {
+	//		return true, nil
+	//	}
 
 	var functionName string
 	switch srv.Action {
@@ -297,7 +317,8 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 	case "push":
 		functionName = "notification_push"
 	default:
-		return true, nil
+		newMessage, err = e.extendMessage(chID, message)
+		return true, newMessage, err
 	}
 
 	var uid, ringno int64
