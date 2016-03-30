@@ -70,9 +70,9 @@ type TarantoolPoolConfig struct {
 */
 
 type MessageType struct {
-	Body   Message
-	Error  string `json:error`
-	Method string `json:method`
+	Body   Message `json:"body"`
+	Error  string  `json:"error"`
+	Method string  `json:"method"`
 }
 
 type ServiceMessage struct {
@@ -284,11 +284,27 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 }
 
 func (e *TarantoolEngine) extendMessage(chID ChannelID, message []byte) (newMessage []byte, err error) {
+	logger.DEBUG.Printf("try to extend message chID = %s, message = %s", chID, string(message))
+
 	uid, _, _, err := parseChannelID(chID)
 	if err != nil {
 		return
 	}
-	return e.extender.Extend(message, uid)
+
+	var m MessageType
+	err = json.Unmarshal(message, &m)
+	if err != nil {
+		return
+	}
+
+	extended, err := e.extender.Extend(m.Body.Data, uid)
+	if extended != nil {
+		m.Body.Data = extended
+		newMessage, err = json.Marshal(&m)
+		logger.DEBUG.Printf("data extended to: %s", string(*m.Body.Data))
+	}
+
+	return
 }
 
 func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFurtherProcessing bool, newMessage []byte, err error) {
@@ -306,10 +322,6 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 		return true, newMessage, err
 	}
 
-	//	if srv.Action == "" {
-	//		return true, nil
-	//	}
-
 	var functionName string
 	switch srv.Action {
 	case "mark":
@@ -318,6 +330,9 @@ func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFu
 		functionName = "notification_push"
 	default:
 		newMessage, err = e.extendMessage(chID, message)
+		if err != nil {
+			logger.ERROR.Printf("extend message failed with '%s'", err)
+		}
 		return true, newMessage, err
 	}
 

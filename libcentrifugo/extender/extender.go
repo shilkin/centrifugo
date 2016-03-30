@@ -7,7 +7,7 @@ import (
 )
 
 type Extender interface {
-	Extend(message []byte, uid int64) ([]byte, error)
+	Extend(message *json.RawMessage, uid int64) (*json.RawMessage, error)
 }
 
 type extenderImpl struct {
@@ -27,16 +27,16 @@ func New() (extender Extender, err error) {
 	return
 }
 
-func (e *extenderImpl) Extend(message []byte, uid int64) (extended []byte, err error) {
+func (e *extenderImpl) Extend(message *json.RawMessage, uid int64) (extended *json.RawMessage, err error) {
 	var d data
-	err = json.Unmarshal(message, &d)
+	err = json.Unmarshal([]byte(*message), &d)
 	if err != nil {
 		return
 	}
 
 	var id uint64
 	shardKey := uint64(uid)
-	for _, msg := range d.Messages {
+	for i, msg := range d.Messages {
 		id, err = strconv.ParseUint(msg.ID, 10, 64)
 		if err != nil {
 			return
@@ -46,9 +46,17 @@ func (e *extenderImpl) Extend(message []byte, uid int64) (extended []byte, err e
 		if err != nil {
 			return
 		}
-		d.AddExtendedData(result)
+		if len(result) > 0 {
+			d.Messages[i].AddExtendedData(result)
+		}
 	}
 
-	extended, err = json.Marshal(d)
+	marshaled, err := json.Marshal(d)
+	if err != nil {
+		return
+	}
+
+	raw := json.RawMessage(marshaled)
+	extended = &raw
 	return
 }
