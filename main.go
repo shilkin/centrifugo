@@ -13,6 +13,7 @@ import (
 	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/cobra"
 	"github.com/shilkin/centrifugo/Godeps/_workspace/src/github.com/spf13/viper"
 	"github.com/shilkin/centrifugo/libcentrifugo"
+	"github.com/shilkin/centrifugo/libcentrifugo/extender"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/tarantool/go-tarantool"
 )
@@ -109,6 +110,10 @@ func Main() {
 	var ttTimeoutResponse int
 	var ttTimeoutReconnect int
 	var ttMaxReconnect uint
+	var ttAggrNode string
+	var ttAggrPort string
+	var ttServiceName string
+	var ttACL string
 
 	var rootCmd = &cobra.Command{
 		Use:   "",
@@ -202,6 +207,10 @@ func Main() {
 			viper.BindPFlag("tt_timeout_response", cmd.Flags().Lookup("tt_timeout_request"))
 			viper.BindPFlag("tt_timeout_reconnect", cmd.Flags().Lookup("tt_timeout_reconnect"))
 			viper.BindPFlag("tt_max_reconnect", cmd.Flags().Lookup("tt_max_reconnect"))
+			viper.BindPFlag("tt_aggr_node", cmd.Flags().Lookup("tt_aggr_node"))
+			viper.BindPFlag("tt_aggr_port", cmd.Flags().Lookup("tt_aggr_port"))
+			viper.BindPFlag("tt_service_name", cmd.Flags().Lookup("tt_service_name"))
+			viper.BindPFlag("tt_acl", cmd.Flags().Lookup("tt_acl"))
 
 			err := validateConfig(configFile)
 			if err != nil {
@@ -267,6 +276,12 @@ func Main() {
 							viper.GetString("tt_user"),
 							viper.GetString("tt_password"),
 						},
+					},
+					TTConnector: extender.Config{
+						AggrNode:    viper.GetString("tt_aggr_node"),
+						AggrPort:    viper.GetString("tt_aggr_port"),
+						ServiceName: viper.GetString("tt_service_name"),
+						ACL:         viper.GetString("tt_acl"),
 					},
 					Endpoint: fmt.Sprintf("http://%s:%s", hostname, viper.GetString("port")),
 				}
@@ -339,6 +354,10 @@ func Main() {
 	rootCmd.Flags().IntVarP(&ttTimeoutResponse, "tt_timeout_response", "", 500, "timeout to wait response in milliseconds (Tarantool engine)")
 	rootCmd.Flags().IntVarP(&ttTimeoutReconnect, "tt_timeout_reconnect", "", 500, "timeout to wait until reconnection attempt in milliseconds (Tarantool engine)")
 	rootCmd.Flags().UintVarP(&ttMaxReconnect, "tt_max_reconnect", "", 1<<32-1, "max number of reconnection attempts (Tarantool engine)") // uint32 max
+	rootCmd.Flags().StringVarP(&ttAggrNode, "tt_aggr_node", "", "localhost", "cocaine aggregation node (Tarantool engine)")
+	rootCmd.Flags().StringVarP(&ttAggrPort, "tt_aggr_port", "", "10053", "cocaine aggregation node port (Tarantool engine)")
+	rootCmd.Flags().StringVarP(&ttServiceName, "tt_service_name", "", "ttconnector", "cocaine TTConnector service name (Tarantool engine)")
+	rootCmd.Flags().StringVarP(&ttACL, "tt_acl", "", "test_acl", "TTConnector ACL (Tarantool engine)")
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",

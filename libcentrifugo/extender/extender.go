@@ -3,7 +3,6 @@ package extender
 import (
 	"encoding/json"
 	"gitlab.srv.pv.km/mailpaas/ttconnector-framework/go/notification"
-	"strconv"
 )
 
 type Extender interface {
@@ -16,13 +15,20 @@ type extenderImpl struct {
 	ip  string
 }
 
-func New() (extender Extender, err error) {
-	db, err := notification.Connect("ttconnector", "localhost:10053")
+func New(config Config) (extender Extender, err error) {
+	err = validate(config)
 	if err != nil {
 		return
 	}
+
+	db, err := notification.Connect(config.ServiceName, config.AggrNode+":"+config.AggrPort)
+	if err != nil {
+		return
+	}
+
 	extender = &extenderImpl{
-		db: db,
+		db:  db,
+		acl: config.ACL,
 	}
 	return
 }
@@ -34,15 +40,10 @@ func (e *extenderImpl) Extend(message *json.RawMessage, uid int64) (extended *js
 		return
 	}
 
-	var id uint64
 	shardKey := uint64(uid)
 	for i, msg := range d.Messages {
-		id, err = strconv.ParseUint(msg.ID, 10, 64)
-		if err != nil {
-			return
-		}
 		var result string
-		result, err = e.db.NotificationGetData(shardKey, e.acl, e.ip).Execute(id)
+		result, err = e.db.NotificationGetData(shardKey, e.acl, e.ip).Execute(msg.ID)
 		if err != nil {
 			return
 		}

@@ -28,8 +28,9 @@ type TarantoolEngine struct {
 }
 
 type TarantoolEngineConfig struct {
-	PoolConfig TarantoolPoolConfig
-	Endpoint   string
+	PoolConfig  TarantoolPoolConfig
+	Endpoint    string
+	TTConnector extender.Config
 }
 
 type TarantoolPool struct {
@@ -89,7 +90,7 @@ func NewTarantoolEngine(app *Application, conf TarantoolEngineConfig) *Tarantool
 		logger.FATAL.Fatalln(err)
 	}
 
-	extender, err := extender.New()
+	extender, err := extender.New(conf.TTConnector)
 	if err != nil {
 		logger.FATAL.Fatalln(err)
 	}
