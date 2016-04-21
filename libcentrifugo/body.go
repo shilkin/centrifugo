@@ -10,35 +10,35 @@ type HistoryBody struct {
 	Data    []Message `json:"data"`
 }
 
-type adminMessageBody struct {
+type AdminMessageBody struct {
 	Project ProjectKey `json:"project"`
 	Message Message    `json:"message"`
 }
 
-type joinLeaveBody struct {
+type JoinLeaveBody struct {
 	Channel Channel    `json:"channel"`
 	Data    ClientInfo `json:"data"`
 }
 
-type connectBody struct {
+type ConnectBody struct {
 	Client  *ConnID `json:"client"`
 	Expired bool    `json:"expired"`
 	TTL     *int64  `json:"ttl"`
 }
 
-type refreshBody struct {
+type RefreshBody struct {
 	TTL *int64 `json:"ttl"`
 }
 
-type subscribeBody struct {
+type SubscribeBody struct {
 	Channel Channel `json:"channel"`
 }
 
-type unsubscribeBody struct {
+type UnsubscribeBody struct {
 	Channel Channel `json:"channel"`
 }
 
-type publishBody struct {
+type PublishBody struct {
 	Channel Channel `json:"channel"`
 	Status  bool    `json:"status"`
 }

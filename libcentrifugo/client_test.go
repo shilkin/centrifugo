@@ -73,7 +73,7 @@ func TestSingleObjectMessage(t *testing.T) {
 
 func testConnectCmd(timestamp string) clientCommand {
 	token := auth.GenerateClientToken("secret", "test1", "user1", timestamp, "")
-	connectCmd := connectClientCommand{
+	connectCmd := ConnectClientCommand{
 		Project:   ProjectKey("test1"),
 		Timestamp: timestamp,
 		User:      UserID("user1"),
@@ -90,7 +90,7 @@ func testConnectCmd(timestamp string) clientCommand {
 
 func testRefreshCmd(timestamp string) clientCommand {
 	token := auth.GenerateClientToken("secret", "test1", "user1", timestamp, "")
-	refreshCmd := refreshClientCommand{
+	refreshCmd := RefreshClientCommand{
 		Project:   ProjectKey("test1"),
 		Timestamp: timestamp,
 		User:      UserID("user1"),
@@ -110,7 +110,7 @@ func testChannelSign(client ConnID, ch Channel) string {
 }
 
 func testSubscribePrivateCmd(ch Channel, client ConnID) clientCommand {
-	subscribeCmd := subscribeClientCommand{
+	subscribeCmd := SubscribeClientCommand{
 		Channel: Channel(ch),
 		Client:  client,
 		Info:    "",
@@ -125,7 +125,7 @@ func testSubscribePrivateCmd(ch Channel, client ConnID) clientCommand {
 }
 
 func testSubscribeCmd(channel string) clientCommand {
-	subscribeCmd := subscribeClientCommand{
+	subscribeCmd := SubscribeClientCommand{
 		Channel: Channel(channel),
 	}
 	cmdBytes, _ := json.Marshal(subscribeCmd)
@@ -137,7 +137,7 @@ func testSubscribeCmd(channel string) clientCommand {
 }
 
 func testUnsubscribeCmd(channel string) clientCommand {
-	unsubscribeCmd := unsubscribeClientCommand{
+	unsubscribeCmd := UnsubscribeClientCommand{
 		Channel: Channel(channel),
 	}
 	cmdBytes, _ := json.Marshal(unsubscribeCmd)
@@ -149,7 +149,7 @@ func testUnsubscribeCmd(channel string) clientCommand {
 }
 
 func testPresenceCmd(channel string) clientCommand {
-	presenceCmd := presenceClientCommand{
+	presenceCmd := PresenceClientCommand{
 		Channel: Channel(channel),
 	}
 	cmdBytes, _ := json.Marshal(presenceCmd)
@@ -161,7 +161,7 @@ func testPresenceCmd(channel string) clientCommand {
 }
 
 func testHistoryCmd(channel string) clientCommand {
-	historyCmd := historyClientCommand{
+	historyCmd := HistoryClientCommand{
 		Channel: Channel(channel),
 	}
 	cmdBytes, _ := json.Marshal(historyCmd)
@@ -173,7 +173,7 @@ func testHistoryCmd(channel string) clientCommand {
 }
 
 func testPublishCmd(channel string) clientCommand {
-	publishCmd := publishClientCommand{
+	publishCmd := PublishClientCommand{
 		Channel: Channel(channel),
 		Data:    []byte("{}"),
 	}

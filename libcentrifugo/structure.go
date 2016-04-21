@@ -73,6 +73,8 @@ type (
 	UserID string // User ID
 	// ConnID is a unique connection ID.
 	ConnID string
+	// UID is sequential message ID
+	MessageID string
 )
 
 // Structure contains project structure related fields - it allows to work with Projects and Namespaces.

@@ -198,13 +198,13 @@ func BenchmarkSendReceive(b *testing.B) {
 	for _, c := range conns {
 		c.sess = &testSession{}
 		cli := app.newTestHandler(b, c.sess)
-		cmd := connectClientCommand{
+		cmd := ConnectClientCommand{
 			Project: c.PK,
 			User:    c.Uid,
 		}
 		cli.connectCmd(&cmd)
 		for _, ch := range c.Channels {
-			cmd := subscribeClientCommand{
+			cmd := SubscribeClientCommand{
 				Channel: ch,
 			}
 			resp, err := cli.subscribeCmd(&cmd)

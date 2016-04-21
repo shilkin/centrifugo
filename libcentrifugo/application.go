@@ -375,7 +375,7 @@ func (app *Application) pubClient(pk ProjectKey, ch Channel, chOpts ChannelOptio
 
 	if chOpts.Watch {
 		resp := newResponse("message")
-		resp.Body = &adminMessageBody{
+		resp.Body = &AdminMessageBody{
 			Project: pk,
 			Message: message,
 		}
@@ -420,7 +420,7 @@ func (app *Application) pubClient(pk ProjectKey, ch Channel, chOpts ChannelOptio
 func (app *Application) pubJoinLeave(pk ProjectKey, ch Channel, method string, info ClientInfo) error {
 	chID := app.channelID(pk, ch)
 	resp := newResponse(method)
-	resp.Body = &joinLeaveBody{
+	resp.Body = &JoinLeaveBody{
 		Channel: ch,
 		Data:    info,
 	}
