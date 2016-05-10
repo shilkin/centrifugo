@@ -1,3 +1,14 @@
+centrifugo (0.1.0ubuntu13) utopic; urgency=medium
+
+  * MAILPAAS-1841| Added notification extender
+  * MAILPAAS-1841| Notification extension supported
+  * MAILPAAS-1841| Extender configuration added + notification id type changed from int to string
+  * MAILPAAS-1841| Renaming: make some private structures public
+  * Fix CMakeLists.txt: add ttconnector-framework dependency
+  * Fix debian/control: add schema-dev dependency
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Tue, 10 May 2016 12:32:32 +0300
+
 centrifugo (0.1.0ubuntu12) utopic; urgency=medium
 
   * MAILPAAS-1248| Blocking connect to each node of tarantool from pool
