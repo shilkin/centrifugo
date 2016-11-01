@@ -3,6 +3,7 @@ package libcentrifugo
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/shilkin/centrifugo/libcentrifugo/extender"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/tarantool/go-tarantool"
@@ -138,16 +139,10 @@ func (e *TarantoolEngine) name() string {
 
 // publish allows to send message into channel
 func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
-	/*
-		message:
-			action: mark, push
-			params:	[id,...]
-	*/
-
 	// Process service messages
 	if chID != e.app.config.ControlChannel && chID != e.app.config.AdminChannel {
-		further, newMessage, err := e.processMessage(chID, message)
-		if !further {
+		newMessage, err := e.processMessage(chID, message)
+		if err != nil {
 			return err // if no need further processing
 		}
 		message = newMessage
@@ -158,8 +153,10 @@ func (e *TarantoolEngine) publish(chID ChannelID, message []byte) error {
 
 // subscribe on channel
 func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
-	uid, ringno, project, err := parseChannelID(chID)
+	logger.INFO.Printf("subscribe %s", chID)
+	endpoint, err := e.makeEndpointFromChannelID(chID)
 	if err != nil {
+		logger.ERROR.Printf("subscribe make endpoint string error: %v\n", err.Error())
 		return
 	}
 
@@ -169,15 +166,16 @@ func (e *TarantoolEngine) subscribe(chID ChannelID) (err error) {
 		return
 	}
 
-	_, err = conn.Call("notification_subscribe", []interface{}{uid, ringno, e.endpoint + "/api/" + project})
+	_, err = conn.Call("notification_channel_subscribe", []interface{}{chID, endpoint})
 
 	return
 }
 
 // unsubscribe from channel
 func (e *TarantoolEngine) unsubscribe(chID ChannelID) (err error) {
-	uid, ringno, project, err := parseChannelID(chID)
+	endpoint, err := e.makeEndpointFromChannelID(chID)
 	if err != nil {
+		logger.ERROR.Printf("unsubscribe make endpoint string error: %v\n", err.Error())
 		return
 	}
 
@@ -187,7 +185,7 @@ func (e *TarantoolEngine) unsubscribe(chID ChannelID) (err error) {
 		return
 	}
 
-	_, err = conn.Call("notification_unsubscribe", []interface{}{uid, ringno, e.endpoint + "/api/" + project})
+	_, err = conn.Call("notification_channel_unsubscribe", []interface{}{chID, endpoint})
 
 	return
 }
@@ -220,21 +218,15 @@ func (e *TarantoolEngine) addHistory(chID ChannelID, message Message, size, life
 // return empty slice
 // all history pushed via publish
 func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
-	uid, ringno, _, err := parseChannelID(chID)
-	if err != nil {
-		logger.ERROR.Printf("history parse chID error: %v\n", err.Error())
-		return nil, err
-	}
-
 	conn, err := e.pool.get()
 	if err != nil {
 		logger.ERROR.Printf("history tarantool pool error: %v\n", err.Error())
 		return nil, err
 	}
 
-	history, err := conn.Call("notification_read", []interface{}{uid, ringno})
+	history, err := conn.Call("notification_notification_history", []interface{}{chID})
 	if err != nil {
-		logger.ERROR.Printf("history notification_read error: %v\n", err.Error())
+		logger.ERROR.Printf("history error: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -244,9 +236,9 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 // helpers
 
 type tarantoolHistoryItem struct {
-	Count  interface{} `json:count`
-	Status string      `json:status`
-	ID     string      `json:id`
+	Count  interface{} `json:"count"`
+	Status string      `json:"status"`
+	ID     string      `json:"id"`
 }
 
 func processHistory(history *tarantool.Response) (msgs []Message, err error) {
@@ -287,10 +279,10 @@ func processHistory(history *tarantool.Response) (msgs []Message, err error) {
 func (e *TarantoolEngine) extendMessage(chID ChannelID, message []byte) (newMessage []byte, err error) {
 	logger.DEBUG.Printf("try to extend message chID = %s, message = %s", chID, string(message))
 
-	uid, _, _, err := parseChannelID(chID)
-	if err != nil {
-		return
-	}
+	//uid, _, _, err := parseChannelID(chID)
+	//if err != nil {
+	//	return
+	//}
 
 	var m MessageType
 	err = json.Unmarshal(message, &m)
@@ -298,7 +290,7 @@ func (e *TarantoolEngine) extendMessage(chID ChannelID, message []byte) (newMess
 		return
 	}
 
-	extended, err := e.extender.Extend(m.Body.Data, uid)
+	extended, err := e.extender.Extend(m.Body.Data, string(chID))
 	if extended != nil {
 		m.Body.Data = extended
 		newMessage, err = json.Marshal(&m)
@@ -308,87 +300,38 @@ func (e *TarantoolEngine) extendMessage(chID ChannelID, message []byte) (newMess
 	return
 }
 
-func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (needFurtherProcessing bool, newMessage []byte, err error) {
+func (e *TarantoolEngine) processMessage(chID ChannelID, message []byte) (newMessage []byte, err error) {
 	newMessage = message // by default, but may be changed
 
 	var msg MessageType
 	err = json.Unmarshal(message, &msg)
 	if err != nil {
-		return true, newMessage, err
+		return
 	}
 
 	var srv ServiceMessage
 	err = json.Unmarshal(*msg.Body.Data, &srv)
 	if err != nil {
-		return true, newMessage, err
-	}
-
-	var functionName string
-	switch srv.Action {
-	case "mark":
-		functionName = "notification_mark"
-	case "push":
-		functionName = "notification_push"
-	default:
-		newMessage, err = e.extendMessage(chID, message)
-		if err != nil {
-			logger.ERROR.Printf("extend message failed with '%s'", err)
-		}
-		return true, newMessage, err
-	}
-
-	var uid, ringno int64
-	uid, ringno, _, err = parseChannelID(chID)
-	if err != nil {
 		return
 	}
 
-	var conn *tarantool.Connection
-	conn, err = e.pool.get()
+	newMessage, err = e.extendMessage(chID, message)
 	if err != nil {
-		return
-	}
-
-	for _, id := range srv.Data {
-		_, err = conn.Call(functionName, []interface{}{uid, ringno, id})
-		if err != nil {
-			logger.ERROR.Printf("%s call error: %s", functionName, err)
-			return
-		}
+		logger.ERROR.Printf("extend message failed with '%s'", err)
 	}
 
 	return
 }
 
-func parseChannelID(chID ChannelID) (uid, ringno int64, project string, err error) {
+func (e *TarantoolEngine) makeEndpointFromChannelID(chID ChannelID) (endpoint string, err error) {
 	// split chID <centrifugo>.<project>.[$]<uid>_<ringno>
 	str := string(chID)
-	logger.DEBUG.Printf("parseChannelID %s", str)
-
+	logger.INFO.Printf("makeEndpointFromChannelID %s", str)
 	result := strings.Split(str, ".")
 	if len(result) != 3 {
-		logger.DEBUG.Printf("unexpected ChannelID %s", str)
+		err = fmt.Errorf("unexpected ChannelID %s", str)
 		return
 	}
-
-	project = result[1]
-	str = result[2]
-
-	separator := "_"
-	prefix := "$"
-
-	if strings.HasPrefix(str, prefix) {
-		str = strings.TrimLeft(str, prefix)
-	}
-	channel := strings.Split(str, separator)
-
-	uid, err = strconv.ParseInt(channel[0], 10, 64)
-	if err != nil {
-		return
-	}
-	ringno, err = strconv.ParseInt(channel[1], 10, 64)
-	if err != nil {
-		return
-	}
+	endpoint = e.endpoint + "/api/" + result[1]
 	return
 }

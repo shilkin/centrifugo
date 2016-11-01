@@ -6,7 +6,7 @@ import (
 )
 
 type Extender interface {
-	Extend(message *json.RawMessage, uid int64) (*json.RawMessage, error)
+	Extend(message *json.RawMessage, shardKey string) (*json.RawMessage, error)
 }
 
 type extenderImpl struct {
@@ -33,14 +33,14 @@ func New(config Config) (extender Extender, err error) {
 	return
 }
 
-func (e *extenderImpl) Extend(message *json.RawMessage, uid int64) (extended *json.RawMessage, err error) {
+func (e *extenderImpl) Extend(message *json.RawMessage, shardKey string) (extended *json.RawMessage, err error) {
 	var d data
 	err = json.Unmarshal([]byte(*message), &d)
 	if err != nil {
 		return
 	}
 
-	shardKey := uint64(uid)
+	// shardKey := fmt.Sprintf("%d", uid)
 	for i, msg := range d.Messages {
 		var result string
 		result, err = e.db.NotificationGetData(shardKey, e.acl, e.ip).Execute(msg.ID)
