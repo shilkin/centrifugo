@@ -7,7 +7,6 @@ import (
 	"github.com/shilkin/centrifugo/libcentrifugo/extender"
 	"github.com/shilkin/centrifugo/libcentrifugo/logger"
 	"github.com/tarantool/go-tarantool"
-	"strconv"
 	"strings"
 )
 
