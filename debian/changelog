@@ -1,3 +1,11 @@
+centrifugo (0.1.0ubuntu14) utopic; urgency=medium
+
+  * MAILPAAS-3148| [refactoring] user-independent channel subscription
+  * MAILPAAS-3148| fix unused import
+  * fix build: go-tarantool opts changed
+
+ -- shilkin <autobuilder@corp.sputnik.ru>  Mon, 14 Nov 2016 18:31:03 +0300
+
 centrifugo (0.1.0ubuntu13) utopic; urgency=medium
 
   * MAILPAAS-1841| Added notification extender
