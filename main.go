@@ -270,11 +270,11 @@ func Main() {
 						Address:  viper.GetString("tt_host") + ":" + viper.GetString("tt_port"),
 						PoolSize: viper.GetInt("tt_pool"),
 						Opts: tarantool.Opts{
-							time.Duration(viper.GetInt("tt_timeout_response")) * time.Millisecond,
-							time.Duration(viper.GetInt("tt_timeout_reconnect")) * time.Millisecond,
-							viper.GetSizeInBytes("tt_max_reconnect"),
-							viper.GetString("tt_user"),
-							viper.GetString("tt_password"),
+							Timeout: time.Duration(viper.GetInt("tt_timeout_response")) * time.Millisecond,
+							Reconnect: time.Duration(viper.GetInt("tt_timeout_reconnect")) * time.Millisecond,
+							MaxReconnects: viper.GetSizeInBytes("tt_max_reconnect"),
+							User: viper.GetString("tt_user"),
+							Pass: viper.GetString("tt_password"),
 						},
 					},
 					TTConnector: extender.Config{
