@@ -16,20 +16,16 @@
       "namespaces": []
     },
     {
-      "name": "development",
-      "secret": "secret",
-      "namespaces": [
-        {
-          "name": "public",
-          "anonymous": true,
-          "publish": true,
-          "watch": true,
-          "presence": true,
-          "join_leave": true,
-          "history_size": 10,
-          "history_lifetime": 30
-        }
-      ]
+      "name": "user_status",
+      "secret": "0",
+      "anonymous": false,
+      "publish": false,
+      "watch": false,
+      "presence": false,
+      "join_leave": false,
+      "history_size": 0,
+      "history_lifetime": 0,
+      "namespaces": []
     }
   ]
 }
