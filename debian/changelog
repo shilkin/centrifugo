@@ -1,3 +1,9 @@
+centrifugo (0.1.0ubuntu15) utopic; urgency=medium
+
+  * fix history call
+
+ -- Denis <autobuilder@corp.sputnik.ru>  Tue, 15 Nov 2016 14:20:58 +0300
+
 centrifugo (0.1.0ubuntu14) utopic; urgency=medium
 
   * MAILPAAS-3148| [refactoring] user-independent channel subscription
