@@ -223,7 +223,7 @@ func (e *TarantoolEngine) history(chID ChannelID) (msgs []Message, err error) {
 		return nil, err
 	}
 
-	history, err := conn.Call("notification_notification_history", []interface{}{chID})
+	history, err := conn.Call("notification_channel_history", []interface{}{chID})
 	if err != nil {
 		logger.ERROR.Printf("history error: %v\n", err.Error())
 		return nil, err
